@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jody Huyck-Jones | Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <h1>Jody Huyck-Jones</h1>
+            <p>Data Engineer | Data Scientist | Back End Developer</p>
+            <a href="#contact" class="btn">Get in Touch</a>
+        </div>
+    </header>
+
+    <section id="about">
+        <div class="container">
+            <div>
+                <h2 class="section-title">About Me</h2>
+                <p>Lorem ipsum dolor sit amet</p>
+                <p>Key technologies...</p>
+                <ul>
+                    <li>1</li>
+                    <li>2</li>
+                    <li>3</li>
+                    <li>4</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <div class="container">
+            <h2 class="section-title">My Projects</h2>
+            <div class="projects-grid">
+                <div class="project">
+                    <div class="project-content">
+                        <h3>Project 1</h3>
+                        <p>Lorem ipsum dolor sit amet</p>
+                    </div>
+                </div>
+                <div class="project">
+                    <div class="project-content">
+                        <h3>Project 2</h3>
+                        <p>Lorem ipsum dolor sit amet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="container">
+            <h2 class="section-title">Get in Touch</h2>
+            <p>Lorem ipsum dolor sit amet</p>
+            <a href="mailto:jodyhj@outlook.com" class="btn">Email Me</a>
+            <div class="social-links">
+                <a href="https://github.com/jdhuyck" class="fab fa-github">Github</a>
+                <a href="www.linkedin.com/in/jodyhj"><i class="fab fa-linkedin"></i>Linkedin</a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="year"></span> Jody Huyck-Jones. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
