@@ -1,7 +1,7 @@
 :root {
     --primary-color: #2c3e50;
     --secondary-color: #3498db;
-    ---accent-color: #e74c3c;
+    --accent-color: #e74c3c;
     --light-color: #ecf0f1;
     --dark-color: #2c3e50;
     --text-color: #333;
@@ -75,8 +75,8 @@ img {
     font-size: 1rem;
 }
 
-.btn-hover {
-    background: var(---accent-color);
+.btn:hover {
+    background: var(--accent-color);
     color: var(--white);
     transform: translateY(-3px);
 }
@@ -125,6 +125,11 @@ header .container{
 }
 
 header h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+header p{
     font-size: 1.5rem;
     opacity: 0.9;
     max-width: 700px;
