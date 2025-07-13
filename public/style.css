@@ -39,7 +39,7 @@ a {
 }
 
 a:hover {
-    color: var(---accent-color);
+    color: var(--accent-color);
 }
 
 h1, h2, h3, h4 {
@@ -161,7 +161,7 @@ header p{
     margin-left: 1rem;
 }
 
-.btn-secondary:hover {
+.btn.secondary:hover {
     background: var(--white);
     color: var(--primary-color);
 }
@@ -207,6 +207,10 @@ section:nth-child(even) {
     margin-bottom: 1rem;
     border-bottom: 2px solid var(--light-color);
     padding-bottom: 0.5rem;
+}
+
+.skill-category ul li {
+    margin-bottom: 0.5rem;
 }
 
 /* Experience Timeline */
