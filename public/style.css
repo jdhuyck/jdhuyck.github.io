@@ -196,76 +196,24 @@ section:nth-child(even) {
 
 /* Skills */
 .skills-container {
-    position: relative;
     max-width: var(--max-width);
     margin: 2rem auto 0;
-    overflow: hidden;
-    mask-image: linear-gradient(
-        to right,
-        transparent,
-        black 20px,
-        black calc(100% - 20px),
-        transparent
-    );
 }
 
 .skills-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 2rem;
-    padding: 1rem 0;
     justify-content: center;
-    overflow-x: auto;
-    scroll-behavior: smooth;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.skill-grid::-webkit-scrollbar {
-    display: none;
 }
 
 .skill-category {
-    flex: 0 0 250px;
+    width: 100%;
+    max-width: 300px;
     background: var(--white);
     padding: 1.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
-}
-
-.skills-nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    background: var(--white);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--box-shadow);
-    cursor: pointer;
-    z-index: 2;
-    opacity: 0.8;
-    transition: var(--transition);
-}
-
-.skills-nav:hover {
-    opacity: 1;
-    transform: translateY(-50%) scale(1.1);
-}
-
-.skills-nav.left {
-    left: 1rem;
-}
-
-.skills-nav.right {
-    right: 1rem;
-}
-
-.skills-nav i {
-    color: var(--primary-color);
-    font-size: 1.2rem;
 }
 
 .skill-category h4 {
@@ -433,18 +381,19 @@ footer {
         max-width: 70%;
         margin: 0 auto;
     }
-
-    .skills-nav {
-        display: none !important;
+    
+    .skills-container {
+        overflow: visible;
+        mask-image: none;
+        padding: 0;
     }
 
     .skills-grid {
-        padding-bottom: 1rem;
-        -webkit-overflow-scrolling: touch;
+        grid-template-columns: 1fr;
     }
 
     .skill-category {
-        flex: 0 0 80%;
+        max-width: 100%;
     }
 
     .timeline::before {

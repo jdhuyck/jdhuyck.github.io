@@ -31,9 +31,6 @@
 
                 <h3 class="skills-title">Technical Skills</h3>
                 <div class="skills-container">
-                    <div class="skills-nav left" onclick="scrollSkills(-250)">
-                        <i class="fas fa-chevron-left"></i>
-                    </div>
                     <div class="skills-grid">
                         <div class="skill-category">
                             <h4>Languages</h4>
@@ -59,9 +56,6 @@
                                 <li>Git, Docker, Github Actions</li>
                                 <li>Data Modeling, CI Development</li>
                             </ul>
-                        </div>
-                        <div class="skills-nav right" onclick="scrollSkills(250)">
-                            <i class="fas fa-chevron-right"></i>
                         </div>
                     </div>
                 </div>
@@ -143,7 +137,6 @@
     <section id="contact">
         <div class="container">
             <h2 class="section-title">Get in Touch</h2>
-            <p>Lorem ipsum dolor sit amet</p>
             <a href="mailto:jodyhj@outlook.com" class="btn">Email Me</a>
             <div class="social-links">
                 <a href="https://github.com/jdhuyck"> <i class="fab fa-github"></i> Github</a>
@@ -159,26 +152,6 @@
     </footer>
 
     <script>
-        function scrollSkills(offset) {
-            const skillGrid = document.querySelector(".skills-grid");
-            skillsGrid.scrollBy({
-                left: offset,
-                behavior: "smooth"
-            });
-        }
-
-        document.querySelector(".skills-grid").addEventListener("scroll", function() {
-            const scrollLeft = this.scrollLeft;
-            const scrollWidth = this.scrollWidth;
-            const clientWidth = this.clientWidth;
-
-            document.querySelector(".skills-nav.left").style.display = scrollLeft === 0 ? "none" : "flex";
-
-            document.querySelector(".skills-nav.right").style.display = scrollLeft + clientWidth >= scrollWidth ? "none" : "flex";
-        });
-
-        document.querySelector(".skills-grid").dispatchEvent(new Event("scroll"));
-
         document.getElementById("year").textContent = new Date().getFullYear();
     </script>
 </body>
