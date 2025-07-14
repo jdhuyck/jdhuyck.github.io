@@ -30,31 +30,39 @@
                 <p>Results-driven Data Scientist and Engineer with expertise in backend systems, API integrations, and data pipeline automation. Proven ability to lead projects from concept to deployment, including Gmail and Shopify API implementations and database architecture.</p>
 
                 <h3 class="skills-title">Technical Skills</h3>
-                <div class="skills-grid">
-                    <div class="skill-category">
-                        <h4>Languages</h4>
-                        <ul>
-                            <li>Python (Pandas, NumPy, FastAPI)</li>
-                            <li>SQL</li>
-                            <li>Rust</li>
-                            <li>JavaScript</li>
-                        </ul>
+                <div class="skills-container">
+                    <div class="skills-nav left" onclick="scrollSkills(-250)">
+                        <i class="fas fa-chevron-left"></i>
                     </div>
-                    <div class="skill-category">
-                        <h4>APIs &amp; Services</h4>
-                        <ul>
-                            <li>Google, Shopify and Discord APIs</li>
-                            <li>RESTful Services</li>
-                            <li>AWS S3</li>
-                        </ul>
-                    </div>
-                    <div class="skill-category">
-                        <h4>Tools &amp; Concepts</h4>
-                        <ul>
-                            <li>PostgreSQL, MongoDB</li>
-                            <li>Git, Docker, Github Actions</li>
-                            <li>Data Modeling, CI Development</li>
-                        </ul>
+                    <div class="skills-grid">
+                        <div class="skill-category">
+                            <h4>Languages</h4>
+                            <ul>
+                                <li>Python (Pandas, NumPy, FastAPI)</li>
+                                <li>SQL</li>
+                                <li>Rust</li>
+                                <li>JavaScript</li>
+                            </ul>
+                        </div>
+                        <div class="skill-category">
+                            <h4>APIs &amp; Services</h4>
+                            <ul>
+                                <li>Google, Shopify and Discord APIs</li>
+                                <li>RESTful Services</li>
+                                <li>AWS S3</li>
+                            </ul>
+                        </div>
+                        <div class="skill-category">
+                            <h4>Tools &amp; Concepts</h4>
+                            <ul>
+                                <li>PostgreSQL, MongoDB</li>
+                                <li>Git, Docker, Github Actions</li>
+                                <li>Data Modeling, CI Development</li>
+                            </ul>
+                        </div>
+                        <div class="skills-nav right" onclick="scrollSkills(250)">
+                            <i class="fas fa-chevron-right"></i>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,6 +159,26 @@
     </footer>
 
     <script>
+        function scrollSkills(offset) {
+            const skillGrid = document.querySelector(".skills-grid");
+            skillsGrid.scrollBy({
+                left: offset,
+                behavior: "smooth"
+            });
+        }
+
+        document.querySelector(".skills-grid").addEventListener("scroll", function() {
+            const scrollLeft = this.scrollLeft;
+            const scrollWidth = this.scrollWidth;
+            const clientWidth = this.clientWidth;
+
+            document.querySelector(".skills-nav.left").style.display = scrollLeft === 0 ? "none" : "flex";
+
+            document.querySelector(".skills-nav.right").style.display = scrollLeft + clientWidth >= scrollWidth ? "none" : "flex";
+        });
+
+        document.querySelector(".skills-grid").dispatchEvent(new Event("scroll"));
+
         document.getElementById("year").textContent = new Date().getFullYear();
     </script>
 </body>
