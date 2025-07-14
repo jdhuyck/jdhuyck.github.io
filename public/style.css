@@ -252,7 +252,7 @@ section:nth-child(even) {
     color: var(--primary-color);
 }
 
-.timeline-item:h4 {
+.timeline-item h4 {
     color: var(--text-light);
     font-weight: normal;
     margin-bottom: 0.5rem;
@@ -379,7 +379,7 @@ footer {
     }
 
     .timeline-item:nth-child(odd), .timeline-item:nth-child(even) {
-        margin: 0 0 2rem 0;
+        margin: 0 0 2rem;
         padding-right: 0;
     }
 
