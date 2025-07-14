@@ -1,0 +1,12 @@
+{
+  "extends": "stylelint-config-standard",
+  "rules": {
+    "color-no-invalid-hex": true,
+    "font-family-no-missing-generic-family-keyword": true,
+    "no-duplicate-selectors": true,
+    "block-no-empty": true
+  },
+  "ignoreFiles": [
+    "**/node_modules/**"
+  ]
+}

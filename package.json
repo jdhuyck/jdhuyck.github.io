@@ -1,0 +1,29 @@
+{
+  "name": "jdhuyck.github.io",
+  "version": "1.0.0",
+  "description": "A portfolio site for Jody Huyck-Jones",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js --watch",
+    "validate": "npx html-validate index.html && npx stylelint \"public/style.css\"",
+    "validate:fix": "npx html-validate index.html && npx stylelint \"public/style.css\" --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jdhuyck/jdhuyck.github.io.git"
+  },
+  "author": "Jody Huyck-Jones",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jdhuyck/jdhuyck.github.io/issues"
+  },
+  "homepage": "https://github.com/jdhuyck/jdhuyck.github.io#readme",
+  "devDependencies": {
+    "html-validate": "^9.7.1",
+    "live-server": "^1.2.2",
+    "stylelint": "^16.21.1",
+    "stylelint-config-standard": "^38.0.0"
+  }
+}
