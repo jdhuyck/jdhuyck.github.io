@@ -227,49 +227,57 @@ section:nth-child(even) {
     margin-bottom: 0.5rem;
 }
 
-/* Experience Timeline */
-.timeline {
-    position: relative;
+/* Experience */
+.experience-articles {
     max-width: 800px;
     margin: 0 auto;
 }
 
-.timeline::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 2px;
-    background: var(--secondary-color);
-    transform: translateX(-50%);
+.experience-item {
+    background: var(--white);
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    transition: var(--transition);
 }
 
-.timeline-item {
-    position: relative;
-    margin-bottom: 3rem;
-    width: calc(50% - 2rem);
+.experience-item:hover {
+    transform: translateY(-5px);
 }
 
-.timeline-item:nth-child(odd) {
-    margin-right: auto;
-    text-align: right;
-    padding-right: 2rem;
+.experience-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--light-color);
 }
 
-.timeline-item:nth-child(even) {
-    margin-left: auto;
-    padding-left: 2rem;
-}
-
-.timeline-item h3 {
+.experience-header h3 {
     color: var(--primary-color);
+    margin-bottom: 0.5rem;
 }
 
-.timeline-item h4 {
+.experience-header h4 {
     color: var(--text-light);
     font-weight: normal;
-    margin-bottom: 0.5rem;
+}
+
+.experience-details {
+    padding-left: 1.5rem;
+}
+
+.experience-details li {
+    margin-bottom: 0.75rem;
+    position: relative;
+}
+
+.experience-details li::before {
+    content: "•";
+    color: var(--secondary-color);
+    font-weight: bold;
+    display: inline-block;
+    width: 1em;
+    margin-left: -1em;
 }
 
 /* Projects */
@@ -396,19 +404,8 @@ footer {
         max-width: 100%;
     }
 
-    .timeline::before {
-        left: 1rem;
-    }
-
-    .timeline-item {
-        width: 100%;
-        padding-left: 2rem;
-        text-align: left;
-    }
-
-    .timeline-item:nth-child(odd), .timeline-item:nth-child(even) {
-        margin: 0 0 2rem;
-        padding-right: 0;
+    .experience-item {
+        padding: 1.5rem;
     }
 
     .contact-methods {
