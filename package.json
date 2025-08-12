@@ -8,7 +8,9 @@
     "dev": "node index.js --watch",
     "validate": "npx html-validate index.html && npx stylelint \"public/style.css\"",
     "validate:fix": "npx html-validate index.html && npx stylelint \"public/style.css\" --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint public/js/**/*.js",
+    "lint:fix": "eslint public/js/**/*.js --fix"
   },
   "repository": {
     "type": "git",
@@ -25,5 +27,10 @@
     "live-server": "^1.2.2",
     "stylelint": "^16.21.1",
     "stylelint-config-standard": "^38.0.0"
+  },
+  "dependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0"
   }
 }
