@@ -166,6 +166,41 @@ header p{
     color: var(--primary-color);
 }
 
+/* Navigation */
+.main-nav {
+    background: var(--dark-color);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgb(0 0 0 / 20%);
+}
+
+.main-nav ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+}
+
+.main-nav li {
+    margin: 0;
+}
+
+.main-nav a {
+    color: var(--white);
+    padding: 1rem 1.5rem;
+    display: block;
+    text-decoration: none;
+    transition: var(--transition);
+    font-weight: 500;
+}
+
+.main-nav a:hover {
+    background: var(--secondary-color);
+    color: var(--white);
+}
+
 /* Sections */
 section {
     padding: 6rem 0;
@@ -379,6 +414,15 @@ footer {
 
     header h1 {
         font-size: 2.5rem;
+    }
+
+    .main-nav ul {
+        flex-wrap: wrap;
+    }
+
+    .main-nav a {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
     }
 
     #about .container {

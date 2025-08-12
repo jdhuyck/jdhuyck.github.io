@@ -4,7 +4,7 @@ const { exec } = require('child_process');
 // Configuration
 const config = {
   port: 3000,
-  watchFiles: ['index.html', 'public/style.css'],
+  watchFiles: ['index.html', 'public/css/style.css'],
   liveServer: true,
 };
 
