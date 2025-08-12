@@ -5,7 +5,6 @@
   "main": "index.js",
   "scripts": {
     "start:static": "live-server --port=3000",
-    "start:eleventy": "npx eleventy --serve",
     "start:jekyll": "bundle exec jekyll server",
     "dev": "npm-run-all --parallel lint start:static",
     "validate": "npx html-validate index.html && npx stylelint \"public/style.css\" && eslint public/js/**/*.js",
