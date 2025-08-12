@@ -1,0 +1,25 @@
+<header>
+    <div class="container">
+        <nav class="main-nav">
+            <a href="/" class="logo">Jody Huyck-Jones</a>
+            <div class="nav-links">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/blogs/blog.html" class="nav-link">Blog</a>
+            </div>
+        </nav>
+
+        {% if page.url == "/" %}
+        <div class="hero">
+            <h1>Jody Huyck-Jones</h1>
+            <p>Data Engineer | Data Scientist | Back End Developer</p>
+            <div class="header-contact">
+                <a href="tel:+447305624769"><i class="fas fa-phone"></i> (+44)7305&#8209;624769 </a>
+                <a href="mailto:jodyhj@outlook.com"><i class="fas fa-envelope"></i> jodyhj@outlook.com </a>
+                <span><i class="fas fa-map-marker-alt"></i> London, UK</span>
+            </div>
+            <a href="#contact" class="btn">Get in Touch</a>
+            <a href="resources/Jody Huyck-Jones resume.pdf" class="btn secondary" download><i class="fas fa-download"></i> Download Resume</a>
+        </div>
+        {% endif %}
+    </div>
+</header>

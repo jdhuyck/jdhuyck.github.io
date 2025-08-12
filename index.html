@@ -1,3 +1,7 @@
+---
+layout: base.html
+---
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,23 +10,10 @@
     <title>Jody Huyck-Jones | Data Engineer &amp; Scientist</title>
     <link rel="stylesheet" href="public/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
-    <header>
-        <div class="container">
-            <h1>Jody Huyck-Jones</h1>
-            <p>Data Engineer | Data Scientist | Back End Developer</p>
-            <div class="header-contact">
-                <a href="tel:+447305624769"><i class="fas fa-phone"></i> (+44)7305&#8209;624769 </a>
-                <a href="mailto:jodyhj@outlook.com"><i class="fas fa-envelope"></i> jodyhj@outlook.com </a>
-                <span><i class="fas fa-map-marker-alt"></i> London, UK</span>
-            </div>
-            <a href="#contact" class="btn">Get in Touch</a>
-            <a href="resources/Jody Huyck-Jones resume.pdf" class="btn secondary" download><i class="fas fa-download"></i> Download Resume</a>
-        </div>
-    </header>
+    {% include partials/header.html %}
 
     <section id="about">
         <div class="container">
@@ -159,5 +150,9 @@
     <script>
         document.getElementById("year").textContent = new Date().getFullYear();
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="public/js/navigation.js"></script>
+    <script src="public/js/validate.js" type="module"></script>
 </body>
 </html>

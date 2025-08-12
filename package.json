@@ -4,11 +4,15 @@
   "description": "A portfolio site for Jody Huyck-Jones",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js --watch",
-    "validate": "npx html-validate index.html && npx stylelint \"public/style.css\"",
-    "validate:fix": "npx html-validate index.html && npx stylelint \"public/style.css\" --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:static": "live-server --port=3000",
+    "start:eleventy": "npx eleventy --serve",
+    "start:jekyll": "bundle exec jekyll server",
+    "dev": "npm-run-all --parallel lint start:static",
+    "validate": "npx html-validate index.html && npx stylelint \"public/style.css\" && eslint public/js/**/*.js",
+    "validate:fix": "npx html-validate index.html && npx stylelint \"public/style.css\" --fix && eslint public/js/**/*.js --fix",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint public/js/**/*.js",
+    "lint:fix": "eslint public/js/**/*.js --fix"
   },
   "repository": {
     "type": "git",
@@ -21,9 +25,14 @@
   },
   "homepage": "https://github.com/jdhuyck/jdhuyck.github.io#readme",
   "devDependencies": {
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.32.0",
     "html-validate": "^9.7.1",
     "live-server": "^1.2.2",
     "stylelint": "^16.21.1",
     "stylelint-config-standard": "^38.0.0"
+  },
+  "dependencies": {
+    "marked": "^16.1.2"
   }
 }

@@ -8,12 +8,7 @@
     <link rel="stylesheet" href="../public/css/blog.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1>Jody's Blog'</h1>
-            <p>Lorem ipsum dolor sit amet</p>
-        </div>
-    </header>
+    {% include ../partials/header.html %}
 
     <main class="container blog-container">
         <div id="blog-posts" class="posts-grid">
@@ -21,6 +16,8 @@
         </div>
     </main>
 
-    <script> src="../public/js/blog.js"</script>
+    <script src="../public/js/blog.js"></script>
+    <script src="../public/js/navigation.js"></script>
+    <script src="../public/js/validate.js" type="module"></script>
 </body>
 </html>
