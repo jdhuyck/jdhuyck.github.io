@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node index.js --watch",
-    "validate": "npx html-validate index.html && npx stylelint \"public/style.css\"",
-    "validate:fix": "npx html-validate index.html && npx stylelint \"public/style.css\" --fix",
+    "validate": "npx html-validate index.html && npx stylelint \"public/css/style.css\"",
+    "validate:fix": "npx html-validate index.html && npx stylelint \"public/css/style.css\" --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint public/js/**/*.js",
     "lint:fix": "eslint public/js/**/*.js --fix"
@@ -29,9 +29,14 @@
     "stylelint-config-standard": "^38.0.0"
   },
   "dependencies": {
+    "chokidar": "^4.0.3",
+    "ejs": "^3.1.10",
     "eslint": "^8.57.1",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.32.0",
-    "live-server": "^1.2.2"
+    "express": "^5.1.0",
+    "front-matter": "^4.0.2",
+    "live-server": "^1.2.2",
+    "marked": "^16.1.2"
   }
 }
