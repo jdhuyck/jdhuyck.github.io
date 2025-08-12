@@ -10,7 +10,7 @@ const config = {
 
 // Development server setup
 if (config.liveServer) {
-  const liveServer = require('live-server'); // eslint-disable-line global-require
+  const liveServer = require('live-server'); // eslint-disable-line
 
   const params = {
     port: config.port,
