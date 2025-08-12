@@ -1,17 +1,16 @@
 const fs = require('fs');
-const path = require('path');
 const { exec } = require('child_process');
 
 // Configuration
 const config = {
   port: 3000,
   watchFiles: ['index.html', 'public/style.css'],
-  liveServer: true
+  liveServer: true,
 };
 
 // Development server setup
 if (config.liveServer) {
-  const liveServer = require('live-server');
+  const liveServer = require('live-server'); // eslint-disable-line global-require
 
   const params = {
     port: config.port,
@@ -21,7 +20,7 @@ if (config.liveServer) {
     ignore: 'node_modules',
     file: 'index.html',
     wait: 1000,
-    logLevel: 2
+    logLevel: 2,
   };
 
   liveServer.start(params);
@@ -31,8 +30,8 @@ if (config.liveServer) {
 // File watcher for development
 if (process.argv.includes('--watch')) {
   console.log('Watching files for changes...');
-  
-  config.watchFiles.forEach(file => {
+
+  config.watchFiles.forEach((file) => {
     fs.watch(file, (eventType, filename) => {
       if (eventType === 'change') {
         console.log(`${filename} changed`);
@@ -49,7 +48,7 @@ function minifyCSS() {
 }
 
 function validateHTML() {
-  exec('npx html-validate index.html', (error, stdout, stderr) => {
+  exec('npx html-validate index.html', (error, stdout, stderr) => { // eslint-disable-line no-unused-vars
     if (error) {
       console.error('HTML validation errors:');
       console.error(stdout);
@@ -63,5 +62,5 @@ function validateHTML() {
 module.exports = {
   config,
   minifyCSS,
-  validateHTML
+  validateHTML,
 };
