@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}} | Jody's Blog</title>
+    <link rel="stylesheet" href="../public/style.css">
+    <link rel="stylesheet" href="../public/css/blog.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="../blogs/blog.html" class="btn">← All Posts</a>
+            <h1 id="post-title">{{title}}</h1>
+            <div class="post-meta">
+                <span id="post-date">{{date}}</span>
+                <div id="post-tags" class="tags-container"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container post-content">
+        <article id="post-body">
+            <!-- Content will be inserted here by JS -->
+        </article>
+    </main>
+
+    <script src="../public/js/post.js"></script>
+</body>
+</html>
