@@ -1,4 +1,6 @@
 .vscode
+*.tsbuildinfo
+
 
 # Logs
 logs
