@@ -1,30 +1,74 @@
-/* Ensure running in Tailwind CSS, not CSS */
+@import "tailwindcss";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.section-title {
-  @apply text-center mb-12 relative text-primary;
+:root {
+  --color-primary: #2c3e50;
+  --color-secondary: #3498db;
+  --color-accent: #e74c3c;
+  --color-light: #ecf0f1;
+  --color-dark: #2c3e50;
+  --color-text-light: #7f8c8d;
 }
 
-.section-title::after {
-  content: "";
-  @apply absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-secondary;
+@layer components {
+  .section-title {
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+    color: var(--color-primary);
+  }
+  
+  .section-title::after {
+    content: "";
+    position: absolute;
+    bottom: -0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 5rem;
+    height: 0.25rem;
+    background: var(--color-secondary);
+  }
+  
+  .btn {
+    display: inline-block;
+    background: var(--color-secondary);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+  
+  .btn:hover {
+    background: var(--color-accent);
+    color: white;
+    transform: translateY(-0.25rem);
+  }
+  
+  .btn.secondary {
+    background: transparent;
+    border: 2px solid white;
+    margin-left: 1rem;
+  }
+  
+  .btn.secondary:hover {
+    background: white;
+    color: var(--color-primary);
+  }
 }
 
-.btn{
-  @apply inline-block bg-secondary text-white px-6 py-3 rounded cursor-point transition-all duration-300 text-base;
+/* Global styles */
+html {
+  scroll-behavior: smooth;
 }
 
-.btn:hover {
-  @apply bg-accent text-white -translate-y-1;
-}
-
-.btn.secondary {
-  @apply bg-transparent border-2 border-white ml-4;
-}
-
-.btn.seconary:hover {
-  @apply bg-white text-primary;
+/* Experience item bullets */
+.experience-details li::before {
+  content: "•";
+  color: var(--color-secondary);
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
 }
