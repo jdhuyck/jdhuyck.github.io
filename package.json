@@ -11,7 +11,7 @@
     "type-check": "tsc --noEmit",
     "deploy": "gh-pages -d dist"
   },
-  "homepage": "https://github.com/jdhuyck/jdhuyck.github.io",
+  "homepage": "https://jdhuyck.github.io",
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
