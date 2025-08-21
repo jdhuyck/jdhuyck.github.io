@@ -9,8 +9,9 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "type-check": "tsc --noEmit",
-    "deploy": "npm run build && gh-pages -d dist"
+    "deploy": "gh-pages -d dist"
   },
+  "homepage": "https://github.com/jdhuyck/jdhuyck.github.io",
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
