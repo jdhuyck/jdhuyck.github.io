@@ -18,7 +18,25 @@ const featuredBlogPosts: BlogPostType[] = [
     tags: ['CSS', 'Tailwind', 'Frontend'],
     content: 'Tailwind CSS is a utility-first framework that allows you to rapidly build custom user interfaces...',
     snippet: 'Discover advanced techniques for using Tailwind CSS in your projects.'
+  },
+  {
+    id: '3',
+    title: 'Building Scalable Data Pipelines',
+    date: '2023-07-10',
+    tags: ['Data Engineering', 'Python', 'ETL'],
+    content: 'Designing robust data pipelines that can scale with your business needs...',
+    snippet: 'Explore best practices for creating maintainable and scalable data infrastructure.'
   }
+]
+
+// Gradient options for the blog post cards
+const gradientOptions = [
+  'from-blue-400 to-indigo-500',
+  'from-green-400 to-teal-500',
+  'from-purple-400 to-pink-500',
+  'from-orange-400 to-red-500',
+  'from-yellow-400 to-amber-500',
+  'from-cyan-400 to-blue-500'
 ]
 
 const Home = () => {
@@ -128,9 +146,11 @@ const Home = () => {
               View All Posts →
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {featuredBlogPosts.map(post => (
-              <div key={post.id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {featuredBlogPosts.map((post, index) => (
+              <div key={post.id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
+                {/* Gradient bar - different color for each post */}
+                <div className={`h-3 bg-gradient-to-r ${gradientOptions[index % gradientOptions.length]}`}></div>
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-800 mb-2">{post.title}</h3>
                   <p className="text-gray-500 text-sm mb-4">{new Date(post.date).toLocaleDateString()}</p>
