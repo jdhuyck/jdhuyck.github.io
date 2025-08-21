@@ -8,5 +8,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
-  base: "/",  // Change to repo name if needed
+  base: "/",
+  // base: Processor.env.NODE_ENV === 'production' ? '/jdhuyck.github.io' : '/'
 })
