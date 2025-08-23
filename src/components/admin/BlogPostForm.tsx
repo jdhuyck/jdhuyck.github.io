@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BlogPostFormData, FormErrors } from '../../types/admin';
 import { validateForm, generateSlug, saveDraftToStorage } from '../../lib/adminUtils';
+import ReactMarkdown from 'react-markdown'
 
 interface BlogPostFormProps {
     initialData?: BlogPostFormData;
@@ -108,7 +109,11 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({
                     <p className='text-gray-600'>Tags: {formData.tags}</p>
                     <p className='text-gray-600'>Snippet: {formData.snippet}</p>
                     <hr className='my-4' />
-                    <div className='whitespace-pre-wrap'>{formData.content}</div>
+                    <div className='whitespace-pre-wrap'>
+                        <ReactMarkdown>
+                            {formData.content}
+                        </ReactMarkdown>
+                    </div>
                 </div>
             </div>
         );
