@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { logout } from '../../lib/authUtils';
 
 interface AdminLayoutProps {
     children: React.ReactNode;
@@ -9,6 +10,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     const location = useLocation();
 
     const isActive = (path: string) => location.pathname === path;
+
+    const handleLogout = () => {
+        logout();
+        window.location.href = '/';
+    };
 
     return (
         <div className='min-h-screen bg-gray-50'>
@@ -44,6 +50,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                             >
                                 View Blog
                             </Link>
+                            <button
+                                onClick={handleLogout}
+                                className='px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-700'
+                            >
+                                Logout
+                            </button>
                         </nav>
                     </div>
                 </div>
