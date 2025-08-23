@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import { BlogPost as BlogPostType } from '../types/blog'
-import { getAllBlogPosts } from '../lib/blogUtils'
+import { getBlogPageData } from '../lib/blogUtils'
 import { useEffect, useState } from 'react'
 
 // Gradient options for the blog post cards
@@ -21,9 +21,8 @@ const Home = () => {
   useEffect(() => {
     const loadFeaturedPosts = async () => {
       try {
-        const allPosts = await getAllBlogPosts()
-        const latestPosts = allPosts.slice(0, 2)
-        setFeaturedBlogPosts(latestPosts)
+        const data = await getBlogPageData(1, 2);
+        setFeaturedBlogPosts(data.posts);
       } catch (error) {
         console.error('Error loading featured blog posts:', error)
       } finally {
