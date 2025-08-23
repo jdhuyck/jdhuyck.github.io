@@ -3,6 +3,6 @@ export interface BlogPost {
   title: string;
   date: string;
   tags: string[];
-  content: any;  // eslint-disable-line @typescript-eslint/no-explicit-any
+  content: string;
   snippet: string;
 }
