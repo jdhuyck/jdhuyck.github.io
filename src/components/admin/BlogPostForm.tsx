@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BlogPostFormData, FormErrors } from '../../types/admin';
-import { validateForm, generateSlug } from '../../lib/adminUtils';
+import { validateForm, generateSlug, saveDraftToStorage } from '../../lib/adminUtils';
 
 interface BlogPostFormProps {
     initialData?: BlogPostFormData;
@@ -27,6 +27,17 @@ const BlogPostForm: React.FC<BlogPostFormProps> = ({
     const [formData, setFormData] = useState<BlogPostFormData>(initialData);
     const [errors, setErrors] = useState<FormErrors>({});
     const [showPreview, setShowPreview] = useState(false);
+
+    // Auto-save Draft
+    useEffect(() => {
+        const autoSaveTimer = setTimeout(() => {
+            if (formData.title || formData.content) {
+                saveDraftToStorage(formData);
+            }
+        }, 2000);  // 2 seconds
+
+        return () => clearTimeout(autoSaveTimer);
+    }, [formData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
