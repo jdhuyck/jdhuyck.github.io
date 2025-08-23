@@ -1,33 +1,8 @@
 import { Link } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 import { BlogPost as BlogPostType } from '../types/blog'
-
-// Mock data for featured blog posts
-const featuredBlogPosts: BlogPostType[] = [
-  {
-    id: '1',
-    title: 'Getting Started with React and TypeScript',
-    date: '2023-05-15',
-    tags: ['React', 'TypeScript', 'Web Development'],
-    content: 'This is a brief introduction to using React with TypeScript...',
-    snippet: 'Learn how to set up a React project with TypeScript and avoid common pitfalls.'
-  },
-  {
-    id: '2',
-    title: 'Mastering Tailwind CSS',
-    date: '2023-06-22',
-    tags: ['CSS', 'Tailwind', 'Frontend'],
-    content: 'Tailwind CSS is a utility-first framework that allows you to rapidly build custom user interfaces...',
-    snippet: 'Discover advanced techniques for using Tailwind CSS in your projects.'
-  },
-  {
-    id: '3',
-    title: 'Building Scalable Data Pipelines',
-    date: '2023-07-10',
-    tags: ['Data Engineering', 'Python', 'ETL'],
-    content: 'Designing robust data pipelines that can scale with your business needs...',
-    snippet: 'Explore best practices for creating maintainable and scalable data infrastructure.'
-  }
-]
+import { getAllBlogPosts } from '../lib/blogUtils'
+import { useEffect, useState } from 'react'
 
 // Gradient options for the blog post cards
 const gradientOptions = [
@@ -40,6 +15,25 @@ const gradientOptions = [
 ]
 
 const Home = () => {
+  const [featuredBlogPosts, setFeaturedBlogPosts] = useState<BlogPostType[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadFeaturedPosts = async () => {
+      try {
+        const allPosts = await getAllBlogPosts()
+        const latestPosts = allPosts.slice(0, 2)
+        setFeaturedBlogPosts(latestPosts)
+      } catch (error) {
+        console.error('Error loading featured blog posts:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadFeaturedPosts()
+  }, [])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {/* Hero Section */}
@@ -134,44 +128,71 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Latest Blog Posts Section */}
-      <section className="py-16 px-4 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-800">Latest Blog Posts</h2>
-            <Link 
-              to="/blog" 
-              className="text-blue-600 font-medium hover:text-blue-800 transition"
+      {/* Latest Blog Posts  Section*/}
+      <section className='py-16 px-4 bg-gray-50'>
+        <div className='max-w-6xl mx-auto'>
+          <div className='flex justify-between items-center mb-12'>
+            <h2 className='text-3xl font-bold text-gray-800'>Latest Blog Posts</h2>
+            <Link
+              to="/blog"
+              className='text-blue-600 font-medium hover:text-blue-800 transition'
             >
               View All Posts →
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {featuredBlogPosts.map((post, index) => (
-              <div key={post.id} className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-2">
-                {/* Gradient bar - different color for each post */}
-                <div className={`h-3 bg-gradient-to-r ${gradientOptions[index % gradientOptions.length]}`}></div>
-                <div className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">{post.title}</h3>
-                  <p className="text-gray-500 text-sm mb-4">{new Date(post.date).toLocaleDateString()}</p>
-                  <p className="text-gray-700 mb-4">{post.snippet}</p>
-                  <div className="flex flex-wrap gap-2 mb-4">
+
+          {loading ? (
+            <div className='text-center py-8'>
+              <div className='inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+              <p className='mt-2 text-gray-600'>Loading posts...</p>
+            </div>
+          ) : featuredBlogPosts.length === 0 ? (
+            <div className='text-center py-8'>
+              <p className='text-gray-600'>No blog posts yet.</p>
+              <p className='text-sm text-gray-500 mt-2'>
+                Check back soon for new content!
+              </p>
+            </div>
+          ) : (
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+              {featuredBlogPosts.map((post, index) => (
+                <div key={post.id} className='bg-white rounded-xl overflow-hidden shadow-md hover:shadow:lg transition'>
+                  <div className={`h-3 bg-gradient-to-r ${gradientOptions[index % gradientOptions.length]}`}></div>
+                  <div className='p-6'>
+                    <h3 className='text-xl font-semibold text-gray-800 mb-2'>{post.title}</h3>
+                    <p className='text-gray-500 text-sm mb-4'>
+                      {new Date(post.date).toLocaleDateString('en-GB', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                      })}
+                    </p>
+
+                    {/* Formatted snippet */}
+                    <div className='text-gray-700 mb-4 prose prose-sm max-w-none'>
+                      <ReactMarkdown>
+                        {post.snippet}
+                      </ReactMarkdown>
+                  </div>
+
+                  <div className='flex flex-wrap gap-2 mb-4'>
                     {post.tags.map(tag => (
-                      <span key={tag} className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                      <span key={tag} className='bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded'>
                         {tag}
                       </span>
                     ))}
                   </div>
-                  <Link 
-                    to={`/blog/${post.id}`} 
-                    className="inline-block text-blue-600 font-medium hover:text-blue-800 transition"
+                  <Link
+                    to={`/blog/${post.id}`}
+                    className='inline-block text-blue-600 font-medium hover:text-blue-800 transition'
                   >
                     Read More →
                   </Link>
                 </div>
-              </div>
-            ))}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
