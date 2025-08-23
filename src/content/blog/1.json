@@ -1,8 +1,0 @@
-{
-    "id": "1",
-    "title": "Getting Started with React and TypeScript",
-    "date": "2023-05-15",
-    "tags": ["React", "TypeScript", "Web Development"],
-    "snippet": "Learn how to set up a React project with TypeScript and avoid common pitfalls.",
-    "content": "# Getting Started with React and TypeScript\n\nReact with TypeScript provides a powerful combination for building modern web applications.\n\n## Setting Up\n\nTo get started, create a new project using Vite:\n\n```bash\nnpm create vite@latest my-react-ts-app -- --template react-ts\n```\n\n## Benefits\n\nTypeScript adds static typing to JavaScript, helping catch errors during development.\n\n### Key Advantages\n\n- **Type Safety**: Catch errors at compile time rather than runtime\n- **Better IDE Support**: Enhanced autocomplete and refactoring tools\n- **Improved Documentation**: Types serve as built-in documentation\n- **Easier Refactoring**: Confidence when making changes to codebase\n\n## Basic Example\n\n```tsx\n// App.tsx\nimport React, { useState } from 'react';\n\ninterface User {\n  id: number;\n  name: string;\n  email: string;\n}\n\nconst App: React.FC = () => {\n  const [user, setUser] = useState<User | null>(null);\n\n  return (\n    <div>\n      <h1>Welcome to React with TypeScript</h1>\n      {user && <p>Hello, {user.name}!</p>}\n    </div>\n  );\n};\n\nexport default App;\n```\n\n## Conclusion\n\nUsing React with TypeScript might require some initial setup, but the long-term benefits for maintainability and developer experience are well worth it."
-}
