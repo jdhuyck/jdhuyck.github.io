@@ -1,20 +1,43 @@
-import React, { useState } from 'react';
-import { initiateGitHubAuth, loginWithPassword } from '../../lib/authUtils';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { initiateGitHubAuth, isAuthenticated, loginWithPassword } from '../../lib/authUtils';
 
 const Login: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const handlePasswordLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate('/admin', { replace: true });
+    }
+  })
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
     
-    if (loginWithPassword(password)) {
-      // Redirect to admin dashboard
-      window.location.href = '/admin';
-    } else {
-      setError('Invalid password');
+    try {
+      const success = loginWithPassword(password);
+
+      if (success) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        if (isAuthenticated()) {
+          console.log('Authentication successful, redirecting...');
+          navigate('/admin', { replace: true });
+        } else {
+          setError('Authentication failed. Please try again.');
+        }
+      } else {
+        setError('Invalid password');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('An error occurred during login');
+    } finally {
       setIsLoading(false);
     }
   };

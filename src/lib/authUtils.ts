@@ -95,15 +95,21 @@ export const handleGitHubCallback = async (code: string, state: string): Promise
 // Password authentication functions
 export const loginWithPassword = (password: string): boolean => {
   if (password === ADMIN_PASSWORD) {
+    console.log('Password correct, setting authenticated');
     setAuthenticated();
+
+    const isNowAuthenticated = isAuthenticated();
+    console.log('Is now authenticated:', isNowAuthenticated);
+
     return true;
   }
+  console.log('Password incorrect');
   return false;
 };
 
 // Authentication state management
 export const setAuthenticated = (): void => {
-  cookies.set('admin_authenticated', 'true', { 
+  cookies.set('admin_authenticated', true, { 
     path: '/',
     maxAge: 3600, // 1 hour session
     secure: window.location.protocol === 'https:',
@@ -112,7 +118,7 @@ export const setAuthenticated = (): void => {
 };
 
 export const isAuthenticated = (): boolean => {
-  return cookies.get('admin_authenticated') === 'true';
+  return cookies.get('admin_authenticated') === true;
 };
 
 export const logout = (): void => {
