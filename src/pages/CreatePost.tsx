@@ -40,7 +40,7 @@ const CreatePost: React.FC = () => {
 
     const handleSaveDraft = (formData: BlogPostFormData) => {  // eslint-disable-line @typescript-eslint/no-unused-vars
         saveDraftToStorage(formData);
-    };
+    }
 
     const handleLoadDraft = () => {
         const draft = loadDraftFromStorage();
