@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BlogPostFormData } from '../../types/admin';
-import { loadPostsFromStorage, savePostsToStorage } from '../../lib/adminUtils';
+import { loadPostsFromStorage, savePostsToStorage, loadDraftFromStorage, clearDraftFromStorage } from '../../lib/adminUtils';
 
 const AdminDashboard: React.FC = () => {
     const [posts, setPosts] = useState<BlogPostFormData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [hasDraft, setHasDraft] = useState(false);
 
     useEffect(() => {
         loadPosts();
+        const draft = loadDraftFromStorage();
+        setHasDraft(!!draft);
     }, []);
 
     const loadPosts = () => {
@@ -16,6 +19,13 @@ const AdminDashboard: React.FC = () => {
         setPosts(storedPosts);
         setIsLoading(false);
     };
+
+    const handleClearDraft = () => {
+        if (window.confirm('Are you sure you want to clear your draft?')) {
+            clearDraftFromStorage();
+            setHasDraft(false);
+        }
+    }
 
     const handleDelete = (id: string) => {
         if (window.confirm('Are you sure you want to delete this post?')) {
@@ -32,6 +42,26 @@ const AdminDashboard: React.FC = () => {
     return (
         <div>
             <div className='flex justify-between items-center mb-6'>
+                {hasDraft && (
+                    <div className='mb-4 bg-yellow-50 border border-yellow-200 rounded-md p-4'>
+                        <p className='text-yellow-800'>
+                            You have a saved draft.{' '}
+                            <Link
+                                to="/admin/new"
+                                className='text-yellow-900 underline hover:text-yellow-700 font-medium'
+                            >
+                                Continue editing
+                            </Link>
+                            {' or '}
+                            <button
+                                onClick={handleClearDraft}
+                                className='text-yellow-900 underline hover:text-yellow-700 font-medium'
+                            >
+                                Clear Draft
+                            </button>
+                        </p>
+                    </div>
+                )}
                 <h2 className='text-2xl font-bold text-gray-900'>Blog Posts</h2>
                 <Link
                     to="/admin/new"

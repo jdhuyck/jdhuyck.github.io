@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import AdminLayout from '../components/admin/AdminLayout';
 import BlogPostForm from '../components/admin/BlogPostForm';
 import { BlogPostFormData } from '../types/admin';
-import { loadPostsFromStorage, savePostsToStorage } from '../lib/adminUtils';
+import { loadPostsFromStorage, saveDraftToStorage, savePostsToStorage } from '../lib/adminUtils';
 
 const EditPost: React.FC = () => {
     const navigate = useNavigate();
@@ -53,6 +53,7 @@ const EditPost: React.FC = () => {
                 initialData={post}
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
+                onSaveDraft={saveDraftToStorage}
                 isEditing={true}
             />
         </AdminLayout>
