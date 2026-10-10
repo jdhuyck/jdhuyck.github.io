@@ -151,7 +151,7 @@ const Blog = () => {
               </div>
             ))}
           </div>
-          
+
           {/* Pagination Component */}
           <Pagination
             pagination={pagination}

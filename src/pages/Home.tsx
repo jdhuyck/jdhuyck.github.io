@@ -45,14 +45,14 @@ const Home = () => {
             Data Engineer | Data Scientist | Back End Developer
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link 
-              to="/portfolio" 
+            <Link
+              to="/portfolio"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition"
             >
               View My Portfolio
             </Link>
-            <Link 
-              to="/blog" 
+            <Link
+              to="/blog"
               className="border border-blue-600 text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition"
             >
               Read My Blog
@@ -200,8 +200,8 @@ const Home = () => {
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Let's Work Together</h2>
           <p className="text-xl mb-8">I'm available for freelance projects and full-time opportunities</p>
-          <a 
-            href="mailto:jodyhj@outlook.com" 
+          <a
+            href="mailto:jodyhj@outlook.com"
             className="inline-block bg-white text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition"
           >
             Get In Touch
