@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { BlogPost as BlogPostType } from '../types/blog'
 import { getBlogPostById } from '../lib/blogUtils'
-import BlogPostTemplate from '../components/BlogPostTemplate'
+import BlogPostTemplate from '../components/blog/BlogPostTemplate'
 
 const BlogPost = () => {
   const { id } = useParams<{ id: string }>()

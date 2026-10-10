@@ -35,3 +35,20 @@ html {
   padding: 0;
   border-radius: 0;
 }
+
+@media (max-width: 640px) {
+  .search-filter-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tag-filters {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag-button {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
