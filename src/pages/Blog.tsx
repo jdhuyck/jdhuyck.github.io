@@ -37,7 +37,7 @@ const Blog = () => {
 
   useEffect(() => {
     loadPosts()
-  }, [filters, pagination.currentPage])
+  }, [filters, pagination.currentPage]) // eslint-disable-line
 
   useEffect(() => {
     // Update URL with current filters and pagination
