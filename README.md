@@ -1,69 +1,27 @@
-# React + TypeScript + Vite
+# jdhuyck.github.io
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The website of Mr Huyck, Teacher of Computing (KS3, GCSE, A Level, T Level).
 
-Currently, two official plugins are available:
+Built with Vite, TypeScript (no framework) and [GSAP](https://gsap.com) with its plugins: ScrollTrigger, ScrollTo, SplitText, ScrambleText, Text, DrawSVG, MorphSVG, MotionPath, Flip, Draggable, Observer, Inertia, CustomEase and CustomWiggle.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/                    site shell: router, nav, home, links, lab, theme
+  gsap.ts               registers every GSAP plugin + house eases
+  site.ts               names, blog categories, timeline, links, resources (edit me)
+  components/           circuit background, CPU simulator, binary + logic gate widgets
+packages/blog/          Markdown blog → /blog              (see its README)
+packages/blog-admin/    local-only post editor → /admin    (dev server only; see its README)
+packages/form-editor/   PDF form filler → /forms           (see its README)
+public/templates/       blank PDFs used by the form editor
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Develop
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
+
+`npm run build` type-checks and builds to `dist/`. While `npm run dev` is running, write posts at http://localhost:5173/admin. Pushing to `main` deploys to GitHub Pages; `dist/404.html` is a copy of `index.html`, so deep links like `/blog/some-post` work.
+
+Every animation respects `prefers-reduced-motion`. The CPU walkthrough falls back to prev/next buttons.
