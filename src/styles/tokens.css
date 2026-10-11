@@ -1,0 +1,129 @@
+/*
+ * Layer order for the whole site. Package styles (blog, form-editor) slot
+ * into `components` / `views` so they can rely on these tokens.
+ */
+@layer reset, tokens, base, layout, components, views, utilities;
+
+/*
+ * Colour: Okabe & Ito's colour-blind-safe palette on neutral greys, plus
+ * Paul Tol's vibrant magenta for a seventh category hue.
+ *   orange #E69F00 · sky blue #56B4E9 · bluish green #009E73 · yellow #F0E442
+ *   blue #0072B2 · vermillion #D55E00 · reddish purple #CC79A7
+ * Dark theme uses the published values. Light theme uses the same hues,
+ * darkened only as far as needed for 4.5:1 text contrast (WCAG AA).
+ * Every text colour meets AA on every background token in its theme
+ * (bg-deep, bg, surface, surface-2); --c-border-2 meets 3:1 for controls.
+ */
+@layer tokens {
+  :root {
+    color-scheme: dark;
+
+    /* ── Neutrals ───────────────────────────────────────── */
+    --c-bg-deep:   #0e0e0e;
+    --c-bg:        #141414;
+    --c-surface:   #1c1c1c;
+    --c-surface-2: #242424;
+    --c-border:    #2e2e2e;   /* decorative dividers */
+    --c-border-2:  #6b6b68;   /* control outlines, ≥3:1 */
+
+    --c-fg:        #ededeb;   /* 15.7:1 */
+    --c-fg-muted:  #b4b4b0;   /* 8.9:1 */
+    --c-fg-dim:    #8f8f8b;   /* 5.7:1 */
+
+    /* ── Okabe–Ito roles ────────────────────────────────── */
+    --c-accent:      #56b4e9;   /* sky blue: links, focus, selection */
+    --c-accent-glow: rgb(86 180 233 / 0.25);
+    --c-term:        #009e73;   /* bluish green: prompt, success */
+    --c-term-glow:   rgb(0 158 115 / 0.22);
+    --c-warn:        #e69f00;   /* orange */
+    --c-error:       #e46500;   /* vermillion, lifted for AA on every surface */
+    --c-violet:      #cc79a7;   /* reddish purple */
+    --c-yellow:      #f0e442;
+    --c-blue:        #0091e3;   /* blue, lifted for AA on dark */
+    --c-magenta:     #f04d89;   /* Paul Tol vibrant magenta, lifted for AA */
+    /* Text on a filled accent/chip */
+    --c-on-accent:   #0e0e0e;
+
+    /* Key stage hues */
+    --c-ks3:    var(--c-term);
+    --c-gcse:   var(--c-accent);
+    --c-alevel: var(--c-violet);
+    --c-tlevel: var(--c-warn);
+
+    /* ── Type ───────────────────────────────────────────── */
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    --fs-xs:   0.75rem;
+    --fs-sm:   0.875rem;
+    --fs-base: 1rem;
+    --fs-md:   1.125rem;
+    --fs-lg:   1.375rem;
+    --fs-xl:   clamp(1.6rem, 1.2rem + 1.6vw, 2.25rem);
+    --fs-2xl:  clamp(2.2rem, 1.4rem + 3.6vw, 4rem);
+    --fs-hero: clamp(2.8rem, 1.2rem + 7vw, 6.5rem);
+
+    --ls-wide: 0.08em;
+    --lh-body: 1.65;
+
+    /* ── Space / shape ──────────────────────────────────── */
+    --sp-1: 0.25rem;
+    --sp-2: 0.5rem;
+    --sp-3: 0.75rem;
+    --sp-4: 1rem;
+    --sp-5: 1.5rem;
+    --sp-6: 2rem;
+    --sp-7: 3rem;
+    --sp-8: 4.5rem;
+    --sp-9: 7rem;
+
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-lg: 14px;
+
+    --w-prose: 72ch;
+    --w-page:  1180px;
+    --nav-h:   52px;
+    --gutter:  clamp(16px, 4vw, 40px);
+
+    /* ── Motion (CSS side; GSAP uses its own eases) ─────── */
+    --dur-fast: 140ms;
+    --dur-med:  260ms;
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+    --shadow-panel:
+      0 0 0 1px var(--c-border),
+      0 12px 32px -20px rgb(0 0 0 / 0.7);
+  }
+
+  /* Light theme: for projectors and daylight classrooms. */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --c-bg-deep:   #f0f0ee;
+    --c-bg:        #fafaf9;
+    --c-surface:   #ffffff;
+    --c-surface-2: #f3f3f1;
+    --c-border:    #e3e3e0;
+    --c-border-2:  #8a8a86;   /* 3.4:1 */
+
+    --c-fg:        #1a1a19;   /* 16.7:1 */
+    --c-fg-muted:  #4a4a47;   /* 8.5:1 */
+    --c-fg-dim:    #62625e;   /* 5.9:1 */
+
+    --c-accent:      #0072b2;   /* blue (passes as published) */
+    --c-accent-glow: rgb(0 114 178 / 0.2);
+    --c-term:        #007d5b;   /* bluish green, darkened */
+    --c-term-glow:   rgb(0 125 91 / 0.16);
+    --c-warn:        #926500;   /* orange, darkened */
+    --c-error:       #b44f00;   /* vermillion, darkened */
+    --c-violet:      #b24481;   /* reddish purple, darkened */
+    --c-yellow:      #766f09;   /* yellow, darkened */
+    --c-blue:        #0072b2;
+    --c-magenta:     #d41258;   /* Tol magenta, darkened */
+    --c-on-accent:   #ffffff;
+
+    --shadow-panel:
+      0 0 0 1px var(--c-border),
+      0 10px 28px -20px rgb(26 26 25 / 0.3);
+  }
+}

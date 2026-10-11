@@ -1,0 +1,143 @@
+@layer components {
+  /* ── Skip link ──────────────────────────────────────── */
+  .skip-link {
+    position: fixed;
+    top: var(--sp-2);
+    left: var(--sp-2);
+    z-index: 200;
+    padding: var(--sp-2) var(--sp-4);
+    background: var(--c-accent);
+    color: var(--c-on-accent);
+    font-family: var(--font-mono);
+    transform: translateY(-200%);
+  }
+  .skip-link:focus { transform: none; }
+
+  /* ── Top nav: a terminal title bar ──────────────────── */
+  .nav {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 50;
+    height: var(--nav-h);
+    border-bottom: 1px solid var(--c-border);
+    background: color-mix(in oklab, var(--c-bg-deep) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .nav__inner {
+    height: 100%;
+    max-width: var(--w-page);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+  }
+  .nav__brand {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    color: var(--c-fg);
+    white-space: nowrap;
+  }
+  .nav__brand:hover { text-decoration: none; }
+  .nav__user  { color: var(--c-term); font-weight: 600; }
+  .nav__colon { color: var(--c-fg-dim); }
+  .nav__path  { color: var(--c-accent); overflow: hidden; text-overflow: ellipsis; }
+  .nav__sigil { color: var(--c-fg-dim); margin-left: 0.4em; }
+  .nav__caret {
+    display: inline-block;
+    width: 0.55em;
+    height: 1.05em;
+    margin-left: 0.3em;
+    background: var(--c-term);
+  }
+
+  .nav__links {
+    display: flex;
+    gap: var(--sp-1);
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .nav__link {
+    position: relative;
+    padding: var(--sp-1) var(--sp-3);
+    color: var(--c-fg-muted);
+    border-radius: var(--r-sm);
+  }
+  .nav__link:hover { color: var(--c-fg); text-decoration: none; background: var(--c-surface); }
+  .nav__link[aria-current="page"] { color: var(--c-fg); }
+  .nav__link::before { content: "./"; color: var(--c-fg-dim); }
+  .nav__indicator {
+    position: absolute;
+    left: var(--sp-3);
+    right: var(--sp-3);
+    bottom: -2px;
+    height: 2px;
+    background: var(--c-accent);
+    border-radius: 2px;
+  }
+
+  .nav__theme {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--c-border-2);
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--c-fg-muted);
+  }
+  .nav__theme:hover { color: var(--c-accent); border-color: var(--c-accent); }
+
+  @media (max-width: 720px) {
+    .nav__user, .nav__colon, .nav__sigil { display: none; }
+    .nav__link { padding-inline: var(--sp-2); }
+    .nav__link::before { content: none; }
+    .nav__indicator { left: var(--sp-2); right: var(--sp-2); }
+  }
+  @media (max-width: 420px) {
+    .nav__brand { display: none; }
+    .nav__links { margin-left: 0; }
+    .nav__theme { margin-left: auto; }
+  }
+
+  /* ── Route wipe ─────────────────────────────────────── */
+  .route-wipe {
+    position: fixed;
+    inset: var(--nav-h) 0 0;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    background: var(--c-bg-deep);
+    pointer-events: none;
+    font-size: var(--fs-lg);
+  }
+
+  /* ── Footer ─────────────────────────────────────────── */
+  .footer {
+    border-top: 1px solid var(--c-border);
+    padding-block: var(--sp-5);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+  }
+  .footer__inner {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--sp-3);
+  }
+  .footer__line, .footer__links { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  body[data-route="forms"] .footer,
+  body[data-route="admin"] .footer { display: none; }
+
+  /* ── Page header used by inner pages ────────────────── */
+  .page-head {
+    padding-block: var(--sp-8) var(--sp-6);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .page-head__title { font-size: var(--fs-2xl); margin-bottom: var(--sp-4); }
+}
