@@ -2,7 +2,7 @@ import type { Template, FilledForm, RepeatableGroup, Rect } from '../types';
 import { loadPdf, renderPage, pdfRectToPercent, ptToCss, createPageShell } from '../pdf/render';
 import { layoutForm, type Cell, type Layout } from '../pdf/flow';
 import { helveticaMetrics, PAD_X, PAD_Y } from '../pdf/fit';
-import { nowValue } from '../layout';
+import { nowValue, newRow, initialRows } from '../layout';
 import { createTimeslotEditor, formatTimeslot, parseTimeslot } from '../timeslot';
 import { createTimerangeEditor, formatTimerange, parseTimerange, boundsFor } from '../timerange';
 import { FormStore } from '../storage';
@@ -58,7 +58,7 @@ export class FormEditor {
     this.root = document.createElement('div');
     this.root.className = 'fe-editor';
     for (const g of this.template.groups ?? []) {
-      if (!this.form.rows[g.id]?.length) this.form.rows[g.id] = Array.from({ length: g.initialRows ?? 1 }, () => ({}));
+      if (!this.form.rows[g.id]?.length) this.form.rows[g.id] = initialRows(g);
     }
   }
 
@@ -82,7 +82,10 @@ export class FormEditor {
   private relayout() {
     const layout = layoutForm(this.template, this.form, this.metrics, { mode: 'edit' });
     this.layout = layout;
-    const key = JSON.stringify(layout.pages.map(p => p.bands.map(b => [b.page, b.top, b.bottom, Math.round(b.y * 10), Math.round(b.h * 10)])));
+    const key = JSON.stringify(layout.pages.map(p => [
+      p.bands.map(b => [b.page, b.top, b.bottom, Math.round(b.y * 10), Math.round(b.h * 10), b.x?.from, b.x?.to]),
+      p.labels.map(l => [l.text, Math.round(l.y * 10)]),
+    ]));
     if (key !== this.bandKey) { this.bandKey = key; this.paintPages(layout); }
     this.placeControls(layout);
   }
@@ -119,10 +122,19 @@ export class FormEditor {
         // without smoothing, so neighbouring border lines don't bleed in.
         const sy = stretched ? Math.ceil((H - b.top) * k) : (H - b.top) * k;
         const sh = stretched ? Math.max(1, Math.floor((H - b.bottom) * k) - sy) : natural * k;
+        const [x0, x1] = b.x?.from ?? [0, W];
+        const [ox0, ox1] = b.x?.to ?? [0, W];
         ctx.imageSmoothingEnabled = !stretched;
-        ctx.drawImage(src, 0, sy, W * k, sh, 0, b.y * k, W * k, b.h * k);
+        ctx.drawImage(src, x0 * k, sy, (x1 - x0) * k, sh, ox0 * k, b.y * k, (ox1 - ox0) * k, b.h * k);
       }
       ctx.imageSmoothingEnabled = true;
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      for (const l of out.labels) {
+        ctx.font = `${l.bold ? 'bold ' : ''}${l.size * k}px Helvetica, Arial, sans-serif`;
+        ctx.fillText(l.text, (l.x + l.w / 2) * k, (H - l.y) * k);
+      }
     });
   }
 
@@ -227,6 +239,16 @@ export class FormEditor {
       inp.type = cell.type;
       inp.value = cell.value;
       inp.addEventListener('input', () => this.write(current(), inp.value));
+      if (cell.type === 'time' && cell.rect.w < 50) {
+        // Too narrow for the browser's time picker: plain text, tidied to hh:mm.
+        inp.type = 'text';
+        inp.inputMode = 'numeric';
+        inp.placeholder = 'hh:mm';
+        inp.addEventListener('change', () => {
+          const m = /^(\d{1,2})[:.\s]?(\d{2})$/.exec(inp.value.trim());
+          if (m && +m[1] < 24 && +m[2] < 60) { inp.value = `${m[1].padStart(2, '0')}:${m[2]}`; this.write(current(), inp.value); }
+        });
+      }
       input = inp;
       if (cell.field.now) {
         const type = cell.type;
@@ -334,8 +356,10 @@ export class FormEditor {
     for (const [g, rows] of byGroup) {
       const all = this.form.rows[g.id] ?? [];
       const lastIndex = all.length - 1;
+      const table = this.template.flow?.bands.find(b => 'group' in b && b.group === g.id);
+      const numberX = table && 'numbers' in table ? table.numbers?.left : undefined;
       for (const [row, r] of rows) {
-        const left = (r.numberX ?? r.x) - 13;
+        const left = (numberX ?? r.numberX ?? r.x) - 13;
         const del = this.rowButton('×', `Remove ${g.label.toLowerCase()} ${row + 1}`, 'fe-row-btn--del', W);
         del.disabled = all.length <= 1;
         Object.assign(del.style, pdfRectToPercent({ x: Math.max(1, left), y: r.y + r.h - 11, w: 10, h: 10 }, layout.pageSize));
@@ -349,6 +373,18 @@ export class FormEditor {
           Object.assign(add.style, pdfRectToPercent({ x: Math.max(1, left - 12), y: r.y + r.h - 11, w: 10, h: 10 }, layout.pageSize));
           add.addEventListener('click', () => this.addRow(g));
           ctrls.appendChild(add);
+
+          // Tables also get a labelled button under their last row (e.g. "+ new stage"), for adding rows mid-lesson.
+          const below = r.y - 14;
+          if (table && below > 2) {
+            const text = `+ ${g.addLabel ?? 'add row'}`;
+            const big = this.rowButton(text, `${g.addLabel ?? 'Add row'} (${g.label})`, 'fe-row-btn--add fe-row-btn--label', W);
+            big.disabled = add.disabled;
+            const { left: x, top: y, height: h } = pdfRectToPercent({ x: numberX ?? r.x, y: below, w: 0, h: 11 }, layout.pageSize);
+            Object.assign(big.style, { left: x, top: y, height: h, fontSize: ptToCss(8, W) });
+            big.addEventListener('click', () => this.addRow(g));
+            ctrls.appendChild(big);
+          }
         }
       }
     }
@@ -375,10 +411,11 @@ export class FormEditor {
   private addRow(g: RepeatableGroup) {
     const rows = this.form.rows[g.id] ??= [];
     if (rows.length >= (g.maxRows ?? 40)) return;
-    rows.push({});
+    rows.push(newRow(g, rows, true));
     this.scheduleAutosave();
     this.relayout();
-    const first = g.fields[0];
+    // Focus the first field the user writes in (not an auto-filled number or time).
+    const first = g.fields.find(f => !f.auto) ?? g.fields[0];
     this.controls.get(`${g.id}.${rows.length - 1}.${first.id}`)?.input?.focus();
   }
 

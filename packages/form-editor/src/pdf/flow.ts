@@ -2,8 +2,11 @@ import type {
   Template, FilledForm, Rect, ScalarField, RepeatableGroup, RowField,
   GrowBand, RowsBand, FieldType,
 } from '../types';
+
+type Numbers = NonNullable<RowsBand['numbers']>;
 import { fitText, requiredHeight, sanitizer, formatValue, blockHeight, wrap, PAD_X, PAD_Y, LEADING, type TextMetrics, type FitResult } from './fit';
 import { groupCellRect } from '../layout';
+import { formatTimeslot, parseTimeslot } from '../timeslot';
 
 /**
  * Flow layout: turns a template + filled form into output pages.
@@ -20,8 +23,16 @@ import { groupCellRect } from '../layout';
  * before. The on-screen editor and the PDF export both draw from this result.
  */
 
-/** Source range [top, bottom] of `page`, drawn into output [y, y + h] (y from the page top). */
-export interface Band { page: number; top: number; bottom: number; y: number; h: number }
+/**
+ * Source range [top, bottom] of `page`, drawn into output [y, y + h] (y from
+ * the page top). `x` maps a source x range onto an output one (scaling it);
+ * without it the band is the full page width, unscaled.
+ */
+export interface Band { page: number; top: number; bottom: number; y: number; h: number; x?: XMap }
+export interface XMap { from: [number, number]; to: [number, number] }
+
+/** Fixed text drawn onto the page (e.g. table row numbers). `y` is the baseline. */
+export interface Label { text: string; x: number; w: number; y: number; size: number; bold?: boolean }
 
 export interface Cell {
   /** Field id, or `${group}.${row}.${field}` for group rows. */
@@ -50,7 +61,7 @@ export interface Cell {
   continued?: boolean;
 }
 
-export interface OutPage { bands: Band[]; cells: Cell[] }
+export interface OutPage { bands: Band[]; cells: Cell[]; labels: Label[] }
 
 export interface Layout {
   pageSize: { width: number; height: number };
@@ -96,6 +107,13 @@ interface Block {
   tableHeader?: { page: number; top: number; bottom: number };
   /** Repeated above this block if it starts a continuation page. */
   header?: { page: number; top: number; bottom: number };
+  /** Numbered table rows: how every band is split into columns, and the labels. */
+  numbering?: Numbers;
+  cols?: XMap[];
+  /** Row number, with the offset of its cells' top from the block top. */
+  number?: { text: string; top: number };
+  /** Number column's header label, when the header is part of this block: its baseline offset. */
+  headerLabel?: { text: string; top: number };
 }
 
 const partH = (p: Part) => (p.kind === 'copy' ? p.top - p.bottom : p.h);
@@ -120,6 +138,29 @@ function mapY(parts: Part[], y: number, anchor: 'top' | 'bottom'): number {
 }
 
 const hasValue = (v: string | undefined) => !!v && v.trim() !== '' && v !== 'false';
+
+/** Size of row numbers and the number column's header, in points. */
+const NUMBER_SIZE = 9;
+
+/**
+ * Bands of a numbered table are drawn in pieces: the margin and left border
+ * as printed, the new column (its `fill` strip stretched), then the table
+ * narrowed by `w`, and the right margin.
+ */
+function numberCols({ left: L, right: R, w, fill }: Numbers, W: number): XMap[] {
+  return [
+    { from: [0, fill[0]], to: [0, fill[0]] },
+    { from: fill, to: [fill[0], L + w] },
+    { from: [L, R], to: [L + w, R] },
+    { from: [R, W], to: [R, W] },
+  ];
+}
+
+/** Where a cell of a numbered table lands once the table is narrowed. */
+function narrow({ left: L, right: R, w }: Numbers, r: Rect): Rect {
+  const k = (R - L - w) / (R - L);
+  return { ...r, x: L + w + (r.x - L) * k, w: r.w * k };
+}
 
 export function layoutForm(
   template: Template,
@@ -179,6 +220,7 @@ export function layoutForm(
         const g = groupById.get(band.group);
         const rows = g ? rowsOf(g) : [];
         const leadParts = takeLead();
+        const nb = band.numbers;
         rows.forEach((r, i) => {
           const slice = band.row.slice ?? [band.row.to + 1.6, band.row.to + 1.1];
           const parts: Part[] = [
@@ -186,20 +228,32 @@ export function layoutForm(
             { kind: 'blank', top: band.row.from, bottom: band.row.to + 1, slice, h: band.row.from - band.row.to - 1 },
             { kind: 'copy', top: band.row.to + 1, bottom: band.row.to },
           ];
-          blocks.push({
+          const block: Block = {
             page: p, parts, cells: [], table: band.group,
             tableHeader: band.header ? { page: p, top: band.header.from, bottom: band.header.to } : undefined,
-          });
+          };
+          blocks.push(block);
           // Cells: the printed first row's geometry, reused for every row.
           if (!g) return;
-          const block = blocks[blocks.length - 1];
+          if (nb) {
+            const top = Math.max(...g.fields.map(rf => { const c = groupCellRect(g, rf, 0, 1); return c.y + c.h; }));
+            // Numbered by the row's own position, so stage 4 is still "4" when an empty stage before it isn't printed.
+            const n = r.index >= 0 ? r.index + 1 : i + 1;
+            Object.assign(block, { numbering: nb, cols: numberCols(nb, W) });
+            // Rows with their own number fields (e.g. stage + time) show those instead.
+            if (!nb.fields?.length) block.number = { text: String(n), top: mapY(parts, top, 'top') };
+            if (nb.header && parts[0].top >= nb.header.baseline) block.headerLabel = { text: nb.header.text, top: mapY(parts, nb.header.baseline, 'top') };
+          }
           for (const rf of g.fields) {
-            const src = groupCellRect(g, rf, 0, 1);
+            const printed = groupCellRect(g, rf, 0, 1);
+            // Fields in the number column are placed from its left edge, keep their size and don't grow.
+            const inColumn = !!nb?.fields?.includes(rf.id);
+            const src = !nb ? printed : inColumn ? { ...printed, x: nb.left + rf.offset.x } : narrow(nb, printed);
             addCell(block, {
               id: `${g.id}.${r.index}.${rf.id}`, field: rf, group: g, row: r.index,
               label: `${g.label} ${i + 1}: ${rf.label}`, type: rf.type,
-              value: r.row[rf.id] ?? '', text: textOf(rf.type, r.row[rf.id] ?? ''), grows: true,
-            }, src, true);
+              value: r.row[rf.id] ?? '', text: textOf(rf.type, r.row[rf.id] ?? ''), grows: !inColumn,
+            }, src, !inColumn);
           }
         });
         cursor = band.to;
@@ -348,12 +402,12 @@ export function layoutForm(
 
   // ── Paginate ────────────────────────────────────────────
   const pages: OutPage[] = [];
-  let out: OutPage = { bands: [], cells: [] };
+  let out: OutPage = { bands: [], cells: [], labels: [] };
   let y = 0;
   let startY = 0;
 
   const newPage = (continuation: boolean) => {
-    out = { bands: [], cells: [] };
+    out = { bands: [], cells: [], labels: [] };
     pages.push(out);
     y = 0;
     if (continuation && cont) {
@@ -362,6 +416,15 @@ export function layoutForm(
     }
     startY = y;
   };
+  /** Draw a band of `block`, in pieces if its table has a number column. */
+  const put = (block: Block, band: Band) => {
+    if (!block.cols) { out.bands.push(band); return; }
+    for (const x of block.cols) out.bands.push({ ...band, x });
+  };
+  /** A centred label in the number column; `y` is its baseline from the page top. */
+  const numberLabel = (nb: Numbers, text: string, y: number) =>
+    out.labels.push({ text, x: nb.left, w: nb.w, y: H - y, size: NUMBER_SIZE, bold: true });
+
   // Never stricter than where the template itself prints: unchanged pages fit as-is.
   const floorOf = (b: Block) => Math.min(marginBottom, b.parts[b.parts.length - 1].bottom);
   const fitsFrom = (top: number, h: number, b: Block) => top + h <= H - floorOf(b) + 0.01;
@@ -387,7 +450,9 @@ export function layoutForm(
       newPage(true);
       if (block.header) {
         const hh = headerH(block);
-        out.bands.push({ page: block.header.page, top: block.header.top, bottom: block.header.bottom, y, h: hh });
+        put(block, { page: block.header.page, top: block.header.top, bottom: block.header.bottom, y, h: hh });
+        const nh = block.numbering?.header;
+        if (nh) numberLabel(block.numbering!, nh.text, y + block.header.top - nh.baseline);
         y += hh;
       }
     }
@@ -395,9 +460,14 @@ export function layoutForm(
     // Draw parts
     let py = y;
     for (const part of block.parts) {
-      if (part.kind === 'copy') out.bands.push({ page: block.page, top: part.top, bottom: part.bottom, y: py, h: part.top - part.bottom });
-      else out.bands.push({ page: block.page, top: part.slice[0], bottom: part.slice[1], y: py, h: part.h });
+      if (part.kind === 'copy') put(block, { page: block.page, top: part.top, bottom: part.bottom, y: py, h: part.top - part.bottom });
+      else put(block, { page: block.page, top: part.slice[0], bottom: part.slice[1], y: py, h: part.h });
       py += partH(part);
+    }
+    if (block.numbering) {
+      if (block.headerLabel) numberLabel(block.numbering, block.headerLabel.text, y + block.headerLabel.top);
+      // Lined up with the first line of the row's (top-aligned) text.
+      if (block.number) numberLabel(block.numbering, block.number.text, y + block.number.top + PAD_Y + m.heightAtSize(NUMBER_SIZE, { descender: false }));
     }
 
     // Place cells
@@ -415,15 +485,22 @@ export function layoutForm(
           continue;
         }
       }
+      let text = c.base.text;
       if (c.base.type !== 'checkbox') {
         const floor = c.base.grows ? readable : c.minSize;
-        fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: Math.min(floor, c.maxSize), multiline: c.wrapText });
+        fit = fitText(m, text, rect, { maxSize: c.maxSize, minSize: Math.min(floor, c.maxSize), multiline: c.wrapText });
         if (fit.truncated && floor > c.minSize) {
-          fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
+          fit = fitText(m, text, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
+        }
+        if (fit.truncated && c.base.type === 'timeslot') {
+          // Too long for its box: try the short form ("Tue P3–4 10:50–12:30").
+          const short = clean(formatTimeslot(parseTimeslot(c.base.value), true));
+          const f = fitText(m, short, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
+          if (!f.truncated) { fit = f; text = short; }
         }
         if (fit.truncated) truncated.push(c.base.label);
       }
-      out.cells.push({ ...c.base, rect, fit });
+      out.cells.push({ ...c.base, text, rect, fit });
     }
     y += h;
 
@@ -441,9 +518,9 @@ export function layoutForm(
       const room = H - marginBottom - y - edge * 2;
       const n = Math.max(1, Math.min(most, linesThatFit(room, readable)));
       const bh = blockHeight(m, n, readable) + 2;
-      out.bands.push({ page: block.page, top: border.top, bottom: border.bottom, y, h: edge });
-      out.bands.push({ page: block.page, top: blank.slice[0], bottom: blank.slice[1], y: y + edge, h: bh });
-      out.bands.push({ page: block.page, top: border.top, bottom: border.bottom, y: y + edge + bh, h: edge });
+      put(block, { page: block.page, top: border.top, bottom: border.bottom, y, h: edge });
+      put(block, { page: block.page, top: blank.slice[0], bottom: blank.slice[1], y: y + edge, h: bh });
+      put(block, { page: block.page, top: border.top, bottom: border.bottom, y: y + edge + bh, h: edge });
       for (const sp of spills) {
         if (!sp.lines.length) continue;
         const rect: Rect = { x: sp.x, y: H - (y + edge + bh), w: sp.w, h: bh };

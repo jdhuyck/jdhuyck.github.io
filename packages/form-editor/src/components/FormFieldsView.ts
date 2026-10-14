@@ -1,6 +1,6 @@
 import type { Template, FilledForm, ScalarField, RepeatableGroup, Matrix } from '../types';
 import { FormStore } from '../storage';
-import { canAddRow, nowValue } from '../layout';
+import { canAddRow, nowValue, newRow, initialRows } from '../layout';
 import { createTimeslotEditor } from '../timeslot';
 import { createTimerangeEditor, boundsFor, type Bounds } from '../timerange';
 
@@ -225,9 +225,7 @@ export class FormFieldsView {
     heading.textContent = g.label;
     wrap.appendChild(heading);
 
-    const rows = (this.form.rows[g.id] ??= Array.from(
-      { length: g.initialRows ?? 1 }, () => ({}),
-    ));
+    const rows = (this.form.rows[g.id] ??= initialRows(g));
 
     const rowsEl = document.createElement('div');
     rowsEl.className = 'fvf-rows';
@@ -237,7 +235,7 @@ export class FormFieldsView {
       rows.forEach((row, i) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'fvf-row';
-        rowEl.dataset.row = String(i + 1);
+        if (!g.fields.some(f => f.auto === 'count')) rowEl.dataset.row = String(i + 1);
 
         for (const rf of g.fields) {
           const cell = document.createElement('label');
@@ -286,7 +284,7 @@ export class FormFieldsView {
     syncAdd();
     add.addEventListener('click', () => {
       if (!canAddRow(g, rows.length)) return;
-      rows.push({});
+      rows.push(newRow(g, rows, true));
       this.scheduleAutosave();
       paint();
       syncAdd();

@@ -10,7 +10,11 @@ Fill in PDF templates (lesson plans, trainee observation forms…) in the browse
   - **Pages:** templates with distinct pages (e.g. the lesson plan's planning and reflection pages) always start each one on a new page. Where Word split one table across printed pages (e.g. the Case Pupil Context Record), the pages are joined and the content flows on.
   - **Lists** (e.g. learning outcomes) are numbered for however many items you add.
   - If a box can't grow any further on its page, the rest of its text continues in a box below, shown read-only and edited in the original box.
-- **Lesson timeline** (lesson plan only, on screen, never exported): each stage of *The plan for learning* is a block across the lesson's time, coloured by its related learning outcome. Unplanned time is hatched and overlapping stages are flagged. Click a stage to jump to its timing; use **hide** to collapse it. Other templates can opt in with `timeline: { group, timing, label, outcome, window }`.
+- **Stage numbers** (lesson plan and trainee observation): *The plan for learning* and the observation's *Observation notes* have a **Stage** column on the left numbering each stage (1, 2, 3…), so an observation's stages line up with the paired lesson plan's, and you can refer to a stage by number as well as by its timing. A stage keeps its number even if an empty stage before it isn't printed, and numbering carries on when a table continues onto another page.
+  - While observing, press **+ new stage** (under the table in pdf view, or at the end of the notes in form view) to start the next stage's notes. The cursor moves straight to the new row's notes. Each stage prints as its own row of the notes table.
+  - Each observation stage has its own **Stage** number and **Time**, printed together in the Stage cell (time beneath the number). A new stage is numbered one after the highest so far and stamped with the current time; change the number to skip lesson-plan stages you have no notes for, and use **now** or type a time (e.g. `915` → `09:15`) to change the time.
+  - Observations saved before stages existed open with their notes as stage 1; stages saved before they had their own number are numbered in order.
+- **Lesson timeline** (lesson plan only, on screen, never exported): each stage of *The plan for learning* is a block across the lesson's time, labelled with its stage number, coloured by its related learning outcome. Unplanned time is hatched and overlapping stages are flagged. Click a stage to jump to its timing; use **hide** to collapse it. Other templates can opt in with `timeline: { group, timing, label, outcome, window }`.
 - **form view** is a plain responsive form with the same fields, which suits phones. It isn't split by printed page: it's one continuous form, or one section per titled part of the template (e.g. *Planning* and *Reflection*). Tables with labelled rows and columns are shown row by row, with a box per column.
 - **:export** checks the form first: required fields, minimum rows and tick-box rules. If anything fails, it lists the problems and highlights the fields. Once the form passes, it builds the PDF from the same layout:
   - **flattened**: text drawn into the page.
@@ -22,16 +26,16 @@ Saved forms live in the browser's `localStorage`. Export a PDF to keep a copy.
 
 - `time`: a single timestamp, with a **now** button.
 - `timerange` (e.g. the plan's **Timings**): a start, an end and a duration in minutes. Fill in the end or the duration and the other follows. With `within: 'time'`, times are kept inside the lesson's start–end, and each stage offers to start where the previous one ended. Prints as `10:50 – 11:05 (15 min)`. Export is blocked if a stage falls outside the lesson or ends before it starts.
-- `timeslot`: a day (Mon–Fri), one or more periods (P1–P6, e.g. P3 + P4 for a double), and a start–end time; **now** fills today and the current time. It prints as e.g. `Tue · P3–P4 · 10:50–12:30`. Fill in your bell times in `src/timeslot.ts` (`PERIOD_TIMES`) and picking periods sets the times automatically.
+- `timeslot`: a day (Mon–Fri), one or more periods (P1–P6, e.g. P3 + P4 for a double), and a start–end time; **now** fills today and the current time. It prints as e.g. `Tue · P3–P4 · 10:50–12:30`, or `Tue P3–4 10:50–12:30` if that doesn't fit its box. Every template with a lesson time uses it: the lesson plan, the trainee observation (beside the date) and the FoPs (just above the date on the *Date/Time* line). A time saved as a plain `hh:mm` before is read as the start time. Fill in your bell times in `src/timeslot.ts` (`PERIOD_TIMES`) and picking periods sets the times automatically.
 
 ## Templates
 
 | Template | File | Notes |
 |----------|------|-------|
 | UH Secondary Lesson Plan | `lesson-plan.pdf` | Variable learning outcomes; page 2 evaluation |
-| Trainee Observation Form | `trainee-observation.pdf` | UH LOF 2024–25; max 3 focus areas; date + time share the Date cell |
+| Trainee Observation Form | `trainee-observation.pdf` | UH LOF 2024–25; max 3 focus areas; date + time share the Date cell; notes are a numbered row per stage |
 | FoP: Assessment, Behaviour Management, Curriculum & Subject Knowledge, Pedagogy (Adaptive Practice / Cognitive Science / Dialogic Practice & Literacy / EAL / Planning & Sequencing) | `fop-*.pdf` | Built from one layout table in `src/templates/fops.ts` |
-| FoP: Behaviour Management (Routines) | `fop-routines.pdf` | Row-per-routine table |
+| FoP: Behaviour Management (Routines) | `fop-routines.pdf` | Row-per-routine table; no date/time on the printed form |
 | Case Pupil Context Record (PRP1) | `case-pupil-context.pdf` | A4 landscape; case pupil matrix (5 labelled rows × pupils A–C), split across 2 printed pages and joined |
 
 The FoP PDFs were converted from the UH `.doc` originals with LibreOffice (`soffice --headless --convert-to pdf`). Field positions match those PDFs. If you replace one with a Word export, page breaks may move: check it in **measure** mode and update `fops.ts`.
@@ -77,7 +81,7 @@ The FoP PDFs were converted from the UH `.doc` originals with LibreOffice (`soff
 | `within` | `timerange` only: the timeslot field it must sit inside |
 | `now` | `date`/`time` only: adds a **today**/**now** button that fills in the current date or time (it can still be typed) |
 
-Repeatable rows (e.g. learning outcomes or a lesson timeline) use `groups`. Each group has an `origin` (bottom-left of row 0), a `rowHeight`, per-row `fields` with offsets, and optional `initialRows`, `maxRows`, `minRows` and `addLabel`. Rows can be added and removed in both views; in pdf view the **+** and **×** buttons appear when you hover over or tab into the group.
+Repeatable rows (e.g. learning outcomes or a lesson timeline) use `groups`. A row field with `auto: 'count'` is filled with the next number when a row is added, and `auto: 'now'` with the current time (only for rows added by hand). Each group has an `origin` (bottom-left of row 0), a `rowHeight`, per-row `fields` with offsets, and optional `initialRows`, `maxRows`, `minRows` and `addLabel`. Rows can be added and removed in both views; in pdf view the **+** and **×** buttons appear when you hover over or tab into the group.
 
 If you change a template's fields, add a `migrate(form)` function to upgrade forms saved with the old layout (see `lesson-plan.ts`).
 
@@ -100,6 +104,8 @@ flow: {
 - **Fields:** a field grows when its bottom edge lies inside the blank area.
 - **Rows whose labels run down to the border:** use a zero-height band just above the border (`to: from - 1`) with a `slice` taken from a clean strip elsewhere in the row (e.g. between the label's last two lines). The extra space is inserted under the label text.
 - **Tables:** give each row's grow band the same `table: { id, header }`. The table is kept on one page when it fits; otherwise it only breaks between rows, with `header` (`{ page, from, to }`) repeated above the first row on the new page. A rows band (`group`) is always treated as a table.
+- **Rows sized independently of the printed box:** a rows band's `row` can be any strip of the printed table, e.g. a 40pt strip at the foot of one big box with its bottom border (the observation's notes). Each row in use is a copy of it, so the box becomes a table. In pdf view, tables also get a labelled add button (e.g. **+ new stage**) under their last row.
+- **Numbered rows:** add `numbers: { left, right, w, fill, header }` to a rows band to number its rows in a new column at the table's left edge (see `lesson-plan.ts`). The table, from its left border `left` to its right border `right`, is narrowed by `w` to make room, so it stays inside the printed margins. The column is drawn by stretching `fill`, a text-free x range just inside the left border, so header shading and row lines carry across. `header: { text, baseline }` labels the column on the header's text baseline. With `fields: ['stage', 'time']`, those row fields sit in the column instead of an automatic number: their `offset.x` is from `left`, and they keep their printed size rather than growing.
 - **Joined pages:** `joins: { 1: 522.7 }` says source page 2 carries straight on from page 1, starting at y = 522.7 (just under its repeated logo). There's no page break; content only moves to a new page when it runs out of room. Pages that aren't joined always start a new page.
 - **Lists:** a group with `list: { rect, numberX }` is drawn as a numbered list inside a grow band.
 - **Measuring:** check bands in **measure** mode. Coordinates are PDF points from the bottom-left, and `from` is greater than `to`.

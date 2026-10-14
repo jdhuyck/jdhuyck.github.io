@@ -304,6 +304,7 @@
   .ptl__legend button:hover { background: var(--c-surface-2); }
   .ptl__legend li.is-overlap .ptl__when { color: var(--c-error); }
   .ptl__dot { flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--ptl-c); align-self: center; }
+  .ptl__num { min-width: 2ch; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
   .ptl__when { color: var(--c-fg-muted); white-space: nowrap; }
   .ptl__mins { color: var(--c-fg-dim); white-space: nowrap; }
   .ptl__lo { color: var(--c-accent); white-space: nowrap; }
@@ -375,6 +376,7 @@
     transition: opacity var(--dur-fast), border-color var(--dur-fast);
   }
   .fe-row-btn--add { color: var(--c-term); }
+  .fe-row-btn.fe-row-btn--label { opacity: 1; }
   .fe-row-btn { opacity: 0.5; }
   .fe-row-btn:hover,
   .fe-field:hover .fe-now,
@@ -656,7 +658,7 @@
     border-radius: var(--r-sm);
   }
 
-  .fvf-row::before {
+  .fvf-row[data-row]::before {
     content: "#" attr(data-row);
     position: absolute;
     top: 2px;

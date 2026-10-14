@@ -36,3 +36,27 @@ export function nowValue(type: 'date' | 'time'): string {
     ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
     : `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
+
+/**
+ * A new row for `g`, with its `auto` fields filled in: `count` one more than
+ * the highest number so far, `now` the current time (when `byHand`).
+ */
+export function newRow(g: RepeatableGroup, rows: Array<Record<string, string>>, byHand: boolean): Record<string, string> {
+  const row: Record<string, string> = {};
+  for (const f of g.fields) {
+    if (f.auto === 'count') {
+      const used = rows.map(r => parseInt(r[f.id] ?? '', 10)).filter(n => Number.isFinite(n));
+      row[f.id] = String(used.length ? Math.max(...used) + 1 : rows.length + 1);
+    } else if (f.auto === 'now' && byHand) {
+      row[f.id] = nowValue('time');
+    }
+  }
+  return row;
+}
+
+/** A group's starting rows (`initialRows`, default 1), numbered in turn. */
+export function initialRows(g: RepeatableGroup): Array<Record<string, string>> {
+  const rows: Array<Record<string, string>> = [];
+  for (let i = 0; i < (g.initialRows ?? 1); i++) rows.push(newRow(g, rows, false));
+  return rows;
+}
