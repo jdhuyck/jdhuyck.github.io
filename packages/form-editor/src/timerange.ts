@@ -92,29 +92,42 @@ export function createTimerangeEditor(
   const hint = el.querySelector<HTMLElement>('[data-hint]')!;
   const suggest = el.querySelector<HTMLButtonElement>('[data-suggest]')!;
   let duration = durationOf(r);
+  /** Typed into since it was last kept inside the lesson window. */
+  let dirty = false;
 
-  /** Keep values inside the lesson window and refresh inputs + hint. */
-  const sync = (emit: boolean) => {
+  /**
+   * Refresh the inputs (not the one being typed in: rewriting a time input
+   * mid-edit resets it, so a minute's second digit would start over) and the
+   * hint. With `clamp`, keep values inside the lesson window: done when you
+   * leave the editor, so a half-typed time isn't pulled into range early.
+   */
+  const sync = (emit: boolean, clamp = true) => {
     const b = bounds();
     const lo = toMinutes(b.min), hi = toMinutes(b.max);
     let s = toMinutes(r.start), e = toMinutes(r.end);
-    if (s !== undefined) {
+    if (s !== undefined && clamp) {
       if (lo !== undefined && s < lo) s = lo;
       if (hi !== undefined && s > hi - 1) s = hi - 1;
       r.start = fromMinutes(s);
     }
-    if (e !== undefined) {
+    if (e !== undefined && clamp) {
       if (s !== undefined && e < s + 1) e = s + 1;
       if (hi !== undefined && e > hi) e = hi;
       r.end = fromMinutes(e);
     }
     duration = durationOf(r) ?? duration;
 
-    start.value = r.start ?? '';
-    end.value = r.end ?? '';
-    dur.value = r.start && r.end ? String(durationOf(r)) : duration ? String(duration) : '';
-    for (const i of [start, end]) { i.min = b.min ?? ''; i.max = b.max ?? ''; }
-    dur.max = lo !== undefined && hi !== undefined ? String(hi - (s ?? lo)) : '';
+    const set = (i: HTMLInputElement, v: string) => { if (i !== document.activeElement && i.value !== v) i.value = v; };
+    set(start, r.start ?? '');
+    set(end, r.end ?? '');
+    set(dur, r.start && r.end ? String(durationOf(r)) : duration ? String(duration) : '');
+    // Only when they change: even rewriting the same min/max resets a time input being typed in.
+    for (const i of [start, end]) {
+      if (i.min !== (b.min ?? '')) i.min = b.min ?? '';
+      if (i.max !== (b.max ?? '')) i.max = b.max ?? '';
+    }
+    const durMax = lo !== undefined && hi !== undefined ? String(hi - (s ?? lo)) : '';
+    if (dur.max !== durMax) dur.max = durMax;
 
     hint.textContent = b.min && b.max ? `lesson ${b.min}–${b.max}` : 'set the lesson time to keep stages inside it';
     suggest.hidden = !b.suggest || r.start === b.suggest;
@@ -127,12 +140,14 @@ export function createTimerangeEditor(
     const s = toMinutes(r.start);
     // Keep the duration you set; otherwise keep the end.
     if (s !== undefined && duration) r.end = fromMinutes(s + duration);
-    sync(true);
+    dirty = true;
+    sync(true, false);
   });
   end.addEventListener('change', () => {
     r.end = end.value || undefined;
     duration = durationOf(r);
-    sync(true);
+    dirty = true;
+    sync(true, false);
   });
   dur.addEventListener('change', () => {
     const d = Math.round(Number(dur.value));
@@ -152,7 +167,11 @@ export function createTimerangeEditor(
   });
 
   // Bounds depend on other fields (lesson time, previous stage): refresh on focus.
-  el.addEventListener('focusin', () => sync(false));
+  el.addEventListener('focusin', () => sync(false, false));
+  // Leaving a time: keep it inside the lesson, and show the result.
+  el.addEventListener('focusout', () => {
+    queueMicrotask(() => { sync(dirty); dirty = false; });
+  });
   sync(false);
   return el;
 }

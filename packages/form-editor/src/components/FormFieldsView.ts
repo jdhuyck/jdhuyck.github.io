@@ -3,6 +3,7 @@ import { FormStore } from '../storage';
 import { canAddRow, nowValue, newRow, initialRows } from '../layout';
 import { createTimeslotEditor } from '../timeslot';
 import { createTimerangeEditor, boundsFor, type Bounds } from '../timerange';
+import { createChoicesEditor, parseChoices, choicesFill, refreshChoices } from '../choices';
 
 export interface FormFieldsViewOptions {
   template: Template;
@@ -12,6 +13,12 @@ export interface FormFieldsViewOptions {
   /** Called after every edit (e.g. to refresh the lesson timeline). */
   onChange?: (form: FilledForm) => void;
 }
+
+/**
+ * Controls made of several buttons/inputs. They aren't wrapped in a <label>:
+ * clicking a label's caption would press its first button.
+ */
+const isComposite = (type: string) => type === 'multiselect' || type === 'timeslot' || type === 'timerange';
 
 export class FormFieldsView {
   private template: Template;
@@ -178,7 +185,7 @@ export class FormFieldsView {
   }
 
   private renderScalar(f: ScalarField): HTMLElement {
-    const label = document.createElement('label');
+    const label = document.createElement(isComposite(f.type) ? 'div' : 'label');
     label.className = 'fvf-field';
     label.dataset.fieldId = f.id;
     if (f.type === 'multiline') label.classList.add('fvf-field--wide');
@@ -230,15 +237,23 @@ export class FormFieldsView {
     const rowsEl = document.createElement('div');
     rowsEl.className = 'fvf-rows';
 
+    // Lesson timeline groups: a bar beside each row, coloured by its outcomes (as in the timeline).
+    const tl = this.template.timeline;
+    const barField = tl?.group === g.id ? tl.outcome : undefined;
+    const paintBar = (rowEl: HTMLElement, row: Record<string, string>) => {
+      if (barField) rowEl.style.setProperty('--fvf-bar', choicesFill(parseChoices(row[barField])));
+    };
+
     const paint = () => {
       rowsEl.innerHTML = '';
       rows.forEach((row, i) => {
         const rowEl = document.createElement('div');
         rowEl.className = 'fvf-row';
+        if (barField) { rowEl.classList.add('fvf-row--bar'); paintBar(rowEl, row); }
         if (!g.fields.some(f => f.auto === 'count')) rowEl.dataset.row = String(i + 1);
 
         for (const rf of g.fields) {
-          const cell = document.createElement('label');
+          const cell = document.createElement(isComposite(rf.type) ? 'div' : 'label');
           cell.className = 'fvf-field';
           cell.dataset.fieldId = `${g.id}.${i}.${rf.id}`;
           if (rf.type === 'multiline') cell.classList.add('fvf-field--wide');
@@ -247,9 +262,10 @@ export class FormFieldsView {
 
           const control = this.buildControl(rf.type, row[rf.id] ?? '', {
             options: rf.options,
+            choices: rf.choices,
             required: rf.required,
             bounds: () => boundsFor(this.form, rf, g, i),
-            onInput: (v) => { row[rf.id] = v; cell.classList.remove('is-invalid'); this.scheduleAutosave(); },
+            onInput: (v) => { row[rf.id] = v; cell.classList.remove('is-invalid'); paintBar(rowEl, row); this.scheduleAutosave(); },
           });
           cell.appendChild(control);
           rowEl.appendChild(cell);
@@ -297,7 +313,7 @@ export class FormFieldsView {
   private buildControl(
     type: string,
     initial: string,
-    opts: { options?: string[]; placeholder?: string; required?: boolean; bounds?: () => Bounds; onInput: (v: string) => void },
+    opts: { options?: string[]; choices?: ScalarField['choices']; placeholder?: string; required?: boolean; bounds?: () => Bounds; onInput: (v: string) => void },
   ): HTMLElement {
     const el = this.buildBareControl(type, initial, opts);
     if (opts.required) el.setAttribute('aria-required', 'true');
@@ -307,9 +323,14 @@ export class FormFieldsView {
   private buildBareControl(
     type: string,
     initial: string,
-    opts: { options?: string[]; placeholder?: string; bounds?: () => Bounds; onInput: (v: string) => void },
+    opts: { options?: string[]; choices?: ScalarField['choices']; placeholder?: string; bounds?: () => Bounds; onInput: (v: string) => void },
   ): HTMLElement {
     if (type === 'timeslot') return createTimeslotEditor(initial, opts.onInput);
+    if (type === 'multiselect') {
+      const c = opts.choices;
+      const labels = () => (this.form.rows[c?.group ?? ''] ?? []).map(r => (c?.label ? r[c.label] ?? '' : '').trim());
+      return createChoicesEditor(initial, opts.onInput, labels, { prefix: c?.prefix, empty: 'add a learning outcome first' });
+    }
     if (type === 'timerange') return createTimerangeEditor(initial, opts.onInput, opts.bounds ?? (() => ({})));
 
     if (type === 'multiline') {
@@ -355,6 +376,8 @@ export class FormFieldsView {
 
   private scheduleAutosave(): void {
     this.onChange?.(this.form);
+    // Outcome buttons follow the outcomes as they're added, removed or renamed.
+    refreshChoices(this.root);
     if (this.autosaveTimer !== null) window.clearTimeout(this.autosaveTimer);
     this.autosaveTimer = window.setTimeout(() => {
       this.save();
