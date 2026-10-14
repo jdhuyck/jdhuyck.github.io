@@ -50,23 +50,27 @@ export const serializeTimeslot = (t: Timeslot): string =>
 
 export const isTimeslotEmpty = (value: string | undefined) => serializeTimeslot(parseTimeslot(value)) === '';
 
-/** "P3–P4" for consecutive periods, "P1, P3" otherwise. */
-export function formatPeriods(periods: Period[]): string {
+/** "P3–P4" for consecutive periods, "P1, P3" otherwise ("P3–4", "P1,3" when `short`). */
+export function formatPeriods(periods: Period[], short = false): string {
   const idx = [...new Set(periods)].map(p => PERIODS.indexOf(p)).sort((a, b) => a - b);
   const runs: string[] = [];
   for (let i = 0; i < idx.length; i++) {
     let j = i;
     while (j + 1 < idx.length && idx[j + 1] === idx[j] + 1) j++;
-    runs.push(i === j ? PERIODS[idx[i]] : `${PERIODS[idx[i]]}–${PERIODS[idx[j]]}`);
+    const last = short ? String(idx[j] + 1) : PERIODS[idx[j]];
+    runs.push(i === j ? PERIODS[idx[i]] : `${PERIODS[idx[i]]}–${last}`);
     i = j;
   }
-  return runs.join(', ');
+  return short ? runs.join(',').replace(/,P/g, ',') : runs.join(', ');
 }
 
-/** e.g. "Mon · P3–P4 · 10:50–12:30" (any part may be missing). */
-export function formatTimeslot(t: Timeslot): string {
+/**
+ * e.g. "Mon · P3–P4 · 10:50–12:30" (any part may be missing), or
+ * "Mon P3–4 10:50–12:30" when `short`, for narrow printed boxes.
+ */
+export function formatTimeslot(t: Timeslot, short = false): string {
   const time = t.start && t.end ? `${t.start}–${t.end}` : t.start ?? (t.end ? `until ${t.end}` : '');
-  return [t.day, formatPeriods(t.periods), time].filter(Boolean).join(' · ');
+  return [t.day, formatPeriods(t.periods, short), time].filter(Boolean).join(short ? ' ' : ' · ');
 }
 
 /** Start/end from the bell times for the selected periods, if known. */

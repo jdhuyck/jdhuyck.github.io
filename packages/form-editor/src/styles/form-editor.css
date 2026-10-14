@@ -376,6 +376,7 @@
     transition: opacity var(--dur-fast), border-color var(--dur-fast);
   }
   .fe-row-btn--add { color: var(--c-term); }
+  .fe-row-btn.fe-row-btn--label { opacity: 1; }
   .fe-row-btn { opacity: 0.5; }
   .fe-row-btn:hover,
   .fe-field:hover .fe-now,
@@ -657,7 +658,7 @@
     border-radius: var(--r-sm);
   }
 
-  .fvf-row::before {
+  .fvf-row[data-row]::before {
     content: "#" attr(data-row);
     position: absolute;
     top: 2px;

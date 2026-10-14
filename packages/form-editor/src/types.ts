@@ -42,6 +42,12 @@ export interface ScalarField extends FieldCommon {
 export interface RowField extends FieldCommon {
   offset: { x: number; y?: number };
   size: { w: number; h: number };
+  /**
+   * Filled in when a row is added: `count` is one more than the previous
+   * row's number (e.g. the next stage); `now` is the current time (only when
+   * a row is added by hand, not for a new form's first row). Both can be edited.
+   */
+  auto?: 'count' | 'now';
 }
 
 export interface RepeatableGroup {
@@ -111,8 +117,15 @@ export interface RowsBand {
    * drawn by stretching `fill`, a text-free x range just inside the left
    * border, so the header's shading and the row lines carry across.
    * `header` labels the column, on the source header's text baseline.
+   * With `fields`, those row fields sit in the column instead of an automatic
+   * number (e.g. an editable stage number with its time beneath): their
+   * `offset.x` is from `left`, they aren't narrowed and they don't grow.
    */
-  numbers?: { left: number; right: number; w: number; fill: [number, number]; header?: { text: string; baseline: number } };
+  numbers?: {
+    left: number; right: number; w: number; fill: [number, number];
+    header?: { text: string; baseline: number };
+    fields?: string[];
+  };
 }
 
 /**

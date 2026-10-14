@@ -150,12 +150,17 @@ const LAYOUTS: FopLayout[] = [
 
 function fop(l: FopLayout): Template {
   const h = l.header;
+  // The date sits on the whole "Date/Time…" line; day, periods and time go just above it.
+  const when = { x: h.date.x, w: h.time.x + h.time.w - h.date.x };
   const commentIds = l.comments.map((_, i) => (i === 0 ? 'comments' : `comments${i + 1}`));
   const fields: ScalarField[] = [
     { id: 'teacher', type: 'text', label: 'Teacher’s name / subject', required: true, page: h.page, rect: h.teacher, fontSize: 9 },
     { id: 'classSet', type: 'text', label: 'Class / set', page: h.page, rect: h.classSet, fontSize: 9 },
-    { id: 'date', type: 'date', label: 'Date', required: true, now: true, page: h.page, rect: h.date, fontSize: 9, minFontSize: 5 },
-    { id: 'time', type: 'time', label: 'Time', now: true, page: h.page, rect: h.time, fontSize: 9, minFontSize: 5 },
+    { id: 'date', type: 'date', label: 'Date', required: true, now: true, page: h.page,
+      rect: { ...when, y: h.date.y, h: h.date.h }, fontSize: 9, minFontSize: 5 },
+    { id: 'time', type: 'timeslot', label: 'Time (day, period, time)',
+      help: 'Pick a day and one or more periods, and/or a start and end time. "now" fills today and the current time.',
+      page: h.page, rect: { ...when, y: h.date.y + 12, h: 10 }, fontSize: 8, minFontSize: 5 },
     ...l.comments.map((c, i): ScalarField => ({
       id: commentIds[i],
       type: 'multiline',

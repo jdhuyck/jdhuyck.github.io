@@ -6,6 +6,7 @@ import type {
 type Numbers = NonNullable<RowsBand['numbers']>;
 import { fitText, requiredHeight, sanitizer, formatValue, blockHeight, wrap, PAD_X, PAD_Y, LEADING, type TextMetrics, type FitResult } from './fit';
 import { groupCellRect } from '../layout';
+import { formatTimeslot, parseTimeslot } from '../timeslot';
 
 /**
  * Flow layout: turns a template + filled form into output pages.
@@ -236,17 +237,23 @@ export function layoutForm(
           if (!g) return;
           if (nb) {
             const top = Math.max(...g.fields.map(rf => { const c = groupCellRect(g, rf, 0, 1); return c.y + c.h; }));
-            Object.assign(block, { numbering: nb, cols: numberCols(nb, W), number: { text: String(i + 1), top: mapY(parts, top, 'top') } });
+            // Numbered by the row's own position, so stage 4 is still "4" when an empty stage before it isn't printed.
+            const n = r.index >= 0 ? r.index + 1 : i + 1;
+            Object.assign(block, { numbering: nb, cols: numberCols(nb, W) });
+            // Rows with their own number fields (e.g. stage + time) show those instead.
+            if (!nb.fields?.length) block.number = { text: String(n), top: mapY(parts, top, 'top') };
             if (nb.header && parts[0].top >= nb.header.baseline) block.headerLabel = { text: nb.header.text, top: mapY(parts, nb.header.baseline, 'top') };
           }
           for (const rf of g.fields) {
             const printed = groupCellRect(g, rf, 0, 1);
-            const src = nb ? narrow(nb, printed) : printed;
+            // Fields in the number column are placed from its left edge, keep their size and don't grow.
+            const inColumn = !!nb?.fields?.includes(rf.id);
+            const src = !nb ? printed : inColumn ? { ...printed, x: nb.left + rf.offset.x } : narrow(nb, printed);
             addCell(block, {
               id: `${g.id}.${r.index}.${rf.id}`, field: rf, group: g, row: r.index,
               label: `${g.label} ${i + 1}: ${rf.label}`, type: rf.type,
-              value: r.row[rf.id] ?? '', text: textOf(rf.type, r.row[rf.id] ?? ''), grows: true,
-            }, src, true);
+              value: r.row[rf.id] ?? '', text: textOf(rf.type, r.row[rf.id] ?? ''), grows: !inColumn,
+            }, src, !inColumn);
           }
         });
         cursor = band.to;
@@ -478,15 +485,22 @@ export function layoutForm(
           continue;
         }
       }
+      let text = c.base.text;
       if (c.base.type !== 'checkbox') {
         const floor = c.base.grows ? readable : c.minSize;
-        fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: Math.min(floor, c.maxSize), multiline: c.wrapText });
+        fit = fitText(m, text, rect, { maxSize: c.maxSize, minSize: Math.min(floor, c.maxSize), multiline: c.wrapText });
         if (fit.truncated && floor > c.minSize) {
-          fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
+          fit = fitText(m, text, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
+        }
+        if (fit.truncated && c.base.type === 'timeslot') {
+          // Too long for its box: try the short form ("Tue P3–4 10:50–12:30").
+          const short = clean(formatTimeslot(parseTimeslot(c.base.value), true));
+          const f = fitText(m, short, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
+          if (!f.truncated) { fit = f; text = short; }
         }
         if (fit.truncated) truncated.push(c.base.label);
       }
-      out.cells.push({ ...c.base, rect, fit });
+      out.cells.push({ ...c.base, text, rect, fit });
     }
     y += h;
 
