@@ -4,7 +4,9 @@ export type FieldType =
   | 'timeslot'
   /** Start, end and duration (e.g. a lesson stage), kept inside `within`. */
   | 'timerange'
-  | 'checkbox' | 'select';
+  | 'checkbox' | 'select'
+  /** Any number (including none) of numbered options, from `choices`. Stored as "1,3". */
+  | 'multiselect';
 
 export interface Rect { x: number; y: number; w: number; h: number; }
 export type Align = 'left' | 'center' | 'right';
@@ -31,6 +33,12 @@ interface FieldCommon {
   now?: boolean;
   /** timerange only: id of the timeslot field whose start–end it must sit inside. */
   within?: string;
+  /**
+   * multiselect only: the options are the rows of group `group`, numbered
+   * 1, 2, 3…, with row field `label` as each one's tooltip and `prefix`
+   * before each number on its button (e.g. "LO").
+   */
+  choices?: { group: string; label?: string; prefix?: string };
 }
 
 export interface ScalarField extends FieldCommon {

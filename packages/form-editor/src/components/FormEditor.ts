@@ -6,6 +6,7 @@ import { nowValue, newRow, initialRows } from '../layout';
 import { createTimeslotEditor, formatTimeslot, parseTimeslot } from '../timeslot';
 import { createTimerangeEditor, formatTimerange, parseTimerange, boundsFor } from '../timerange';
 import { FormStore } from '../storage';
+import { createChoicesEditor, formatChoices, parseChoices, choicesFill } from '../choices';
 
 export interface FormEditorOptions {
   template: Template;
@@ -155,9 +156,11 @@ export class FormEditor {
         ctl.wrap.style.setProperty('--fe-pad-y', ptToCss(PAD_Y, W));
         ctl.wrap.classList.toggle('fe-field--grows', cell.grows);
         if (cell.continued && ctl.display) ctl.display.textContent = cell.fit?.lines.join('\n') ?? '';
-        if ((cell.type === 'timeslot' || cell.type === 'timerange') && ctl.display) {
-          const text = cell.type === 'timeslot' ? formatTimeslot(parseTimeslot(cell.value)) : formatTimerange(parseTimerange(cell.value));
-          ctl.display.textContent = text || (cell.type === 'timeslot' ? 'day · period · time' : 'set time');
+        if ((cell.type === 'timeslot' || cell.type === 'timerange' || cell.type === 'multiselect') && ctl.display) {
+          const text = cell.type === 'timeslot' ? formatTimeslot(parseTimeslot(cell.value))
+            : cell.type === 'timerange' ? formatTimerange(parseTimerange(cell.value))
+            : formatChoices(cell.value);
+          ctl.display.textContent = text || (cell.type === 'timeslot' ? 'day · period · time' : cell.type === 'timerange' ? 'set time' : 'none');
           ctl.display.classList.toggle('is-empty', !text);
         }
         if (cell.number) {
@@ -210,7 +213,7 @@ export class FormEditor {
       return { wrap, display };
     }
 
-    if (cell.type === 'timeslot' || cell.type === 'timerange') {
+    if (cell.type === 'timeslot' || cell.type === 'timerange' || cell.type === 'multiselect') {
       const display = document.createElement('button');
       display.type = 'button';
       display.className = 'fe-control fe-timeslot';
@@ -293,7 +296,9 @@ export class FormEditor {
     const write = (v: string) => this.write(this.currentCell(id) ?? cell, v);
     const editor = cell.type === 'timerange'
       ? createTimerangeEditor(cell.value, write, () => boundsFor(this.form, cell.field, cell.group, cell.row))
-      : createTimeslotEditor(cell.value, write);
+      : cell.type === 'multiselect'
+        ? createChoicesEditor(cell.value, write, () => this.choiceLabels(cell.field.choices), { prefix: cell.field.choices?.prefix })
+        : createTimeslotEditor(cell.value, write);
     const pop = document.createElement('div');
     pop.className = 'fe-popover';
     pop.setAttribute('role', 'dialog');
@@ -324,6 +329,11 @@ export class FormEditor {
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onDown, true);
     };
+  }
+
+  /** Options for a multiselect: one per row of its `choices.group`. */
+  private choiceLabels(c: { group: string; label?: string } | undefined): string[] {
+    return (this.form.rows[c?.group ?? ''] ?? []).map(r => (c?.label ? r[c.label] ?? '' : '').trim());
   }
 
   private closePopover() {
@@ -357,9 +367,21 @@ export class FormEditor {
       const all = this.form.rows[g.id] ?? [];
       const lastIndex = all.length - 1;
       const table = this.template.flow?.bands.find(b => 'group' in b && b.group === g.id);
+      // Lesson timeline groups: a bar beside each row, coloured by its outcomes (as in the timeline).
+      const tl = this.template.timeline;
+      const bars = tl?.group === g.id && tl.outcome ? tl.outcome : undefined;
       const numberX = table && 'numbers' in table ? table.numbers?.left : undefined;
       for (const [row, r] of rows) {
-        const left = (numberX ?? r.numberX ?? r.x) - 13;
+        if (bars) {
+          const bar = document.createElement('span');
+          bar.className = 'fe-stage-bar';
+          const picked = parseChoices(all[row]?.[bars]);
+          bar.style.background = choicesFill(picked);
+          bar.title = picked.length ? `LO ${picked.join(', ')}` : 'no learning outcome';
+          Object.assign(bar.style, pdfRectToPercent({ x: (numberX ?? r.x) - 4.5, y: r.y - 1.5, w: 3, h: r.h + 3 }, layout.pageSize));
+          ctrls.appendChild(bar);
+        }
+        const left = (numberX ?? r.numberX ?? r.x) - (bars ? 18 : 13);
         const del = this.rowButton('×', `Remove ${g.label.toLowerCase()} ${row + 1}`, 'fe-row-btn--del', W);
         del.disabled = all.length <= 1;
         Object.assign(del.style, pdfRectToPercent({ x: Math.max(1, left), y: r.y + r.h - 11, w: 10, h: 10 }, layout.pageSize));

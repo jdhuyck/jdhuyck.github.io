@@ -2,6 +2,7 @@ import { StandardFontEmbedder, StandardFonts } from 'pdf-lib';
 import type { FieldType, Rect } from '../types';
 import { formatTimeslot, parseTimeslot } from '../timeslot';
 import { formatTimerange, parseTimerange } from '../timerange';
+import { formatChoices } from '../choices';
 
 /**
  * The font measurements layout needs. Both the on-screen editor and the PDF
@@ -177,5 +178,6 @@ export function formatValue(type: FieldType, value: string): string {
   }
   if (type === 'timeslot') return formatTimeslot(parseTimeslot(value));
   if (type === 'timerange') return formatTimerange(parseTimerange(value));
+  if (type === 'multiselect') return formatChoices(value);
   return value;
 }

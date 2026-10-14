@@ -350,8 +350,8 @@ export function createFormEditorView(): ViewHandle {
     renderSidebar();
 
     main.innerHTML = '';
-    // Lesson timeline (lesson plan only): on screen, never exported.
-    const timeline = mode === 'measure' ? null : createPlanTimeline(template, id => editor?.focusField(id));
+    // Lesson timeline (lesson plan only): on screen, and exportable as its own PDF.
+    const timeline = mode === 'measure' ? null : createPlanTimeline(template, id => editor?.focusField(id), () => void doExportTimeline());
     if (timeline) { main.appendChild(timeline.el); timeline.update(form); }
     const onChange = timeline ? (f: typeof form) => timeline.update(f) : undefined;
     const host = document.createElement('div');
@@ -429,6 +429,21 @@ export function createFormEditorView(): ViewHandle {
       setStatus(err instanceof Error ? err.message : 'export failed', 'error');
     } finally {
       exportBtn.disabled = false;
+    }
+  };
+
+  /** The lesson timeline as its own PDF (no validation: it's a planning aid). */
+  const doExportTimeline = async () => {
+    if (!editor || !activeTemplateId) return;
+    const template = templates.get(activeTemplateId)!;
+    const form = editor.save();
+    setStatus('exporting timeline…');
+    try {
+      const { exportTimeline } = await import('./pdf/timeline');
+      await saveBytesToDisk(await exportTimeline(template, form), `${form.name} – timeline.pdf`);
+      setStatus('exported timeline pdf ✓', 'ok');
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : 'export failed', 'error');
     }
   };
 

@@ -150,6 +150,11 @@
   }
   .ts__chip:hover { border-color: var(--c-accent); }
   .ts__chip[aria-pressed="true"] { background: var(--c-accent); border-color: var(--c-accent); color: var(--c-on-accent); }
+  /* Learning-outcome chips carry their timeline colour. */
+  .ch__chip { box-shadow: inset 0 -3px 0 var(--ch-c); }
+  .ch__chip[aria-pressed="true"] { background: var(--ch-c); border-color: var(--ch-c); color: #111; box-shadow: none; }
+  .ch__chip.is-stale { border-style: dashed; border-color: var(--c-error); }
+  .ch__empty { font-size: var(--fs-xs); color: var(--c-fg-dim); }
   .ts__times input {
     padding: 4px 6px;
     border: 1px solid var(--c-border-2);
@@ -195,8 +200,6 @@
 
   /* ── Lesson timeline (on screen only) ───────── */
   .ptl {
-    --ptl-1: #56b4e9; --ptl-2: #009e73; --ptl-3: #e69f00; --ptl-4: #cc79a7;
-    --ptl-5: #0072b2; --ptl-6: #d55e00; --ptl-7: #f0e442;
     width: 100%;
     max-width: 1000px;
     margin: 0 auto var(--sp-4);
@@ -211,8 +214,8 @@
   .ptl__title { font-weight: 600; color: var(--c-accent); text-transform: uppercase; letter-spacing: var(--ls-wide); font-size: var(--fs-xs); }
   .ptl__window { color: var(--c-fg); }
   .ptl__sum { color: var(--c-fg-muted); }
+  .ptl__actions { margin-left: auto; display: flex; gap: var(--sp-2); }
   .ptl__toggle {
-    margin-left: auto;
     padding: 2px 8px;
     border: 1px solid var(--c-border-2);
     border-radius: var(--r-sm);
@@ -262,26 +265,26 @@
     flex-direction: column;
     justify-content: center;
     gap: 1px;
-    padding: 2px 6px;
+    padding: 2px 6px 2px 10px;
     overflow: hidden;
     border: 0;
-    border-left: 4px solid var(--ptl-c);
     border-radius: 3px;
-    background: color-mix(in oklab, var(--ptl-c) 22%, var(--c-surface));
+    /* A bar of the outcome colour(s) on the left, over a tint of them. */
+    background: var(--ptl-bar) left / 4px 100% no-repeat, var(--ptl-tint);
     color: var(--c-fg);
     text-align: left;
     cursor: pointer;
     transition: left 150ms var(--ease-out), width 150ms var(--ease-out);
   }
-  .ptl__stage:hover, .ptl__stage:focus-visible { background: color-mix(in oklab, var(--ptl-c) 36%, var(--c-surface)); }
+  .ptl__stage:hover, .ptl__stage:focus-visible { background: var(--ptl-bar) left / 4px 100% no-repeat, var(--ptl-tint-hover); }
   .ptl__stage.is-overlap { outline: 2px solid var(--c-error); outline-offset: -2px; }
-  .ptl__stage.is-outside { opacity: 0.6; border-left-style: dashed; }
+  .ptl__stage.is-outside { opacity: 0.6; }
   .ptl__stage-time { font-size: 10px; color: var(--c-fg-muted); white-space: nowrap; }
   .ptl__stage-label { font: var(--fs-xs) var(--font-sans); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .ptl__legend {
     list-style: none;
-    margin: var(--sp-6) 0 0;
+    margin: var(--sp-3) 0 0;
     padding: 0;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -303,7 +306,9 @@
   }
   .ptl__legend button:hover { background: var(--c-surface-2); }
   .ptl__legend li.is-overlap .ptl__when { color: var(--c-error); }
-  .ptl__dot { flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--ptl-c); align-self: center; }
+  .ptl__dot { flex: none; width: 8px; height: 8px; border-radius: 2px; background: var(--ptl-bar); align-self: center; }
+  .ptl__key { display: flex; flex-wrap: wrap; gap: 2px var(--sp-4); margin: var(--sp-6) 0 0; font-size: var(--fs-xs); color: var(--c-fg-muted); }
+  .ptl__lo-key { display: inline-flex; align-items: center; gap: 6px; max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-sans); }
   .ptl__num { min-width: 2ch; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
   .ptl__when { color: var(--c-fg-muted); white-space: nowrap; }
   .ptl__mins { color: var(--c-fg-dim); white-space: nowrap; }
@@ -378,6 +383,8 @@
   .fe-row-btn--add { color: var(--c-term); }
   .fe-row-btn.fe-row-btn--label { opacity: 1; }
   .fe-row-btn { opacity: 0.5; }
+  /* Stage bars: beside each lesson-plan stage, coloured by its learning outcomes. */
+  .fe-stage-bar { position: absolute; pointer-events: auto; border-radius: 2px; }
   .fe-row-btn:hover,
   .fe-field:hover .fe-now,
   .fe-field:focus-within .fe-now,
@@ -658,6 +665,17 @@
     border-radius: var(--r-sm);
   }
 
+  /* Lesson-plan stages: a bar in the padding beside the row, coloured by its learning outcomes. */
+  .fvf-row--bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(-1 * var(--sp-3));
+    width: 4px;
+    border-radius: 2px;
+    background: var(--fvf-bar);
+  }
   .fvf-row[data-row]::before {
     content: "#" attr(data-row);
     position: absolute;
