@@ -9,9 +9,11 @@ import { templates } from './registry';
 import { lessonPlan } from './lesson-plan';
 import { traineeObservation } from './trainee-observation';
 import { fops } from './fops';
+import { casePupilContext } from './case-pupil-context';
 
 templates.register(lessonPlan);
 templates.register(traineeObservation);
+templates.register(casePupilContext);
 fops.forEach(t => templates.register(t));
 
 export { templates };

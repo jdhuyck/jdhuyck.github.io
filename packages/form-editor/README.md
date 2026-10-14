@@ -5,11 +5,13 @@ Fill in PDF templates (lesson plans, trainee observation forms…) in the browse
 - **Folders:** templates are listed like folders. Open one to see only its saved forms, start a new one, or rename and delete forms. The breadcrumbs (`~/forms / template / form`) are clickable, and clicking the form name renames it.
 - **pdf view** shows the pages exactly as they'll be exported, and they reflow as you type:
   - Text shrinks to fit until it reaches a readable size (8pt). After that the **box grows** and everything below moves down, onto a new page if needed.
-  - **Tables print only the rows you use.** Add and remove rows with the **+** / **×** buttons in the left margin. Long tables continue on extra pages with their header repeated.
+  - **Tables print only the rows you use.** Add and remove rows with the **+** / **×** buttons in the left margin.
+  - **Tables stay on one page.** If a table won't fit in the space left, the whole table moves to the next page. A table taller than a page breaks only between rows, never inside one, and its header is repeated on the next page.
+  - **Pages:** templates with distinct pages (e.g. the lesson plan's planning and reflection pages) always start each one on a new page. Where Word split one table across printed pages (e.g. the Case Pupil Context Record), the pages are joined and the content flows on.
   - **Lists** (e.g. learning outcomes) are numbered for however many items you add.
   - If a box can't grow any further on its page, the rest of its text continues in a box below, shown read-only and edited in the original box.
 - **Lesson timeline** (lesson plan only, on screen, never exported): each stage of *The plan for learning* is a block across the lesson's time, coloured by its related learning outcome. Unplanned time is hatched and overlapping stages are flagged. Click a stage to jump to its timing; use **hide** to collapse it. Other templates can opt in with `timeline: { group, timing, label, outcome, window }`.
-- **form view** is a plain responsive form with the same fields, which suits phones.
+- **form view** is a plain responsive form with the same fields, which suits phones. It isn't split by printed page: it's one continuous form, or one section per titled part of the template (e.g. *Planning* and *Reflection*). Tables with labelled rows and columns are shown row by row, with a box per column.
 - **:export** checks the form first: required fields, minimum rows and tick-box rules. If anything fails, it lists the problems and highlights the fields. Once the form passes, it builds the PDF from the same layout:
   - **flattened**: text drawn into the page.
   - **fillable**: real PDF form fields at the same positions, pre-filled, with auto font size.
@@ -30,6 +32,7 @@ Saved forms live in the browser's `localStorage`. Export a PDF to keep a copy.
 | Trainee Observation Form | `trainee-observation.pdf` | UH LOF 2024–25; max 3 focus areas; date + time share the Date cell |
 | FoP: Assessment, Behaviour Management, Curriculum & Subject Knowledge, Pedagogy (Adaptive Practice / Cognitive Science / Dialogic Practice & Literacy / EAL / Planning & Sequencing) | `fop-*.pdf` | Built from one layout table in `src/templates/fops.ts` |
 | FoP: Behaviour Management (Routines) | `fop-routines.pdf` | Row-per-routine table |
+| Case Pupil Context Record (PRP1) | `case-pupil-context.pdf` | A4 landscape; case pupil matrix (5 labelled rows × pupils A–C), split across 2 printed pages and joined |
 
 The FoP PDFs were converted from the UH `.doc` originals with LibreOffice (`soffice --headless --convert-to pdf`). Field positions match those PDFs. If you replace one with a Word export, page breaks may move: check it in **measure** mode and update `fops.ts`.
 
@@ -95,8 +98,24 @@ flow: {
 
 - **Grow band:** `from` is just under the box's label, `to` is its bottom border line. The blank area is redrawn by stretching a thin text-free `slice` (default: just above the border). If the prompts run right down to the border, pick a clean `slice` elsewhere on the page.
 - **Fields:** a field grows when its bottom edge lies inside the blank area.
+- **Rows whose labels run down to the border:** use a zero-height band just above the border (`to: from - 1`) with a `slice` taken from a clean strip elsewhere in the row (e.g. between the label's last two lines). The extra space is inserted under the label text.
+- **Tables:** give each row's grow band the same `table: { id, header }`. The table is kept on one page when it fits; otherwise it only breaks between rows, with `header` (`{ page, from, to }`) repeated above the first row on the new page. A rows band (`group`) is always treated as a table.
+- **Joined pages:** `joins: { 1: 522.7 }` says source page 2 carries straight on from page 1, starting at y = 522.7 (just under its repeated logo). There's no page break; content only moves to a new page when it runs out of room. Pages that aren't joined always start a new page.
 - **Lists:** a group with `list: { rect, numberX }` is drawn as a numbered list inside a grow band.
 - **Measuring:** check bands in **measure** mode. Coordinates are PDF points from the bottom-left, and `from` is greater than `to`.
+
+### Sections and matrices
+
+- `sections: [{ page: 0, title: 'Planning' }, { page: 1, title: 'Reflection' }]` gives form view a titled section starting at each page. Without `sections`, form view is one continuous form.
+- `matrices` describes a table with labelled rows and columns (see `case-pupil-context.ts`):
+
+  ```ts
+  matrices: [{ id: 'pupils', label: 'Case pupils',
+    columns: [{ id: 'a', label: 'Case Pupil A' }, …],
+    rows: [{ id: 'rationale', label: 'Rationale for case pupil selection', help: '…' }, …] }],
+  ```
+
+  Each cell is an ordinary field in `fields` with the id `pupils.rationale.a` (`matrix.row.column`), so it's positioned, validated and exported like any other field. The matrix only tells form view to lay the cells out as a grid, shown where its first cell is declared.
 
 ### Rules
 

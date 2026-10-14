@@ -679,7 +679,31 @@
   .fvf-group__add { align-self: flex-start; }
   .fvf-group__add:disabled { opacity: .4; cursor: not-allowed; }
 
+  /* ── Matrices (labelled rows × labelled columns) ── */
+  .fvf-matrix__row {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-2);
+    padding: var(--sp-3);
+    background: var(--c-bg-deep);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-sm);
+  }
+  .fvf-matrix__label {
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    color: var(--c-fg);
+    margin: 0;
+  }
+  .fvf-matrix__cells {
+    display: grid;
+    grid-template-columns: repeat(var(--fvf-cols, 3), minmax(0, 1fr));
+    gap: var(--sp-3);
+    margin-top: var(--sp-1);
+  }
+
   @media (max-width: 640px) {
     .fvf-fields { grid-template-columns: 1fr; }
+    .fvf-matrix__cells { grid-template-columns: 1fr; }
   }
 }
