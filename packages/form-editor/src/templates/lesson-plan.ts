@@ -132,6 +132,8 @@ export const lessonPlan: Template = {
         page: 0, group: 'plan', from: 346, to: 102,
         row: { from: 346, to: 297 },
         header: { from: 387, to: 346 },
+        // Stage numbers, so stages can be referred to by number as well as time.
+        numbers: { left: 35.5, right: 559.5, w: 30, fill: [36.4, 40.8], header: { text: 'Stage', baseline: 364.6 } },
       },
       // Page 2
       { page: 1, from: 679, to: 597 },                       // subject knowledge

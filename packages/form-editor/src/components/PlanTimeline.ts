@@ -151,7 +151,7 @@ export function createPlanTimeline(template: Template, onSelect: (fieldId: strin
               style="left:${pct(s.start)};width:${width(s.start, s.end)};--ptl-c:${colourOf(s, i)};--lane:${lane.get(s.row)}"
               title="${escape(title)}" aria-label="Stage ${s.row + 1}: ${escape(title)}">
               <span class="ptl__stage-time">${mins(s.end - s.start)}</span>
-              <span class="ptl__stage-label">${escape(s.label || `stage ${s.row + 1}`)}</span>
+              <span class="ptl__stage-label">${s.label ? `${s.row + 1}. ${escape(s.label)}` : `stage ${s.row + 1}`}</span>
             </button>`;
         }).join('')}
       </div>
@@ -160,6 +160,7 @@ export function createPlanTimeline(template: Template, onSelect: (fieldId: strin
           <li class="${overlapping.has(s.row) ? 'is-overlap' : ''}" style="--ptl-c:${colourOf(s, i)}">
             <button type="button" data-row="${s.row}">
               <span class="ptl__dot" aria-hidden="true"></span>
+              <span class="ptl__num">${s.row + 1}</span>
               <span class="ptl__when">${fromMinutes(s.start)}–${fromMinutes(s.end)}</span>
               <span class="ptl__mins">${mins(s.end - s.start)}</span>
               ${s.outcome ? `<span class="ptl__lo">LO ${escape(s.outcome)}</span>` : ''}

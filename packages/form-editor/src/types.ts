@@ -104,6 +104,15 @@ export interface RowsBand {
   to: number;
   row: { from: number; to: number; slice?: [number, number] };
   header?: { from: number; to: number };
+  /**
+   * Number the rows (1, 2, 3…) in a column added at the table's left edge.
+   * The table, from its left border `left` to `right`, is narrowed by `w` to
+   * make room, so it stays inside the printed margins. The new column is
+   * drawn by stretching `fill`, a text-free x range just inside the left
+   * border, so the header's shading and the row lines carry across.
+   * `header` labels the column, on the source header's text baseline.
+   */
+  numbers?: { left: number; right: number; w: number; fill: [number, number]; header?: { text: string; baseline: number } };
 }
 
 /**

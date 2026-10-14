@@ -82,7 +82,10 @@ export class FormEditor {
   private relayout() {
     const layout = layoutForm(this.template, this.form, this.metrics, { mode: 'edit' });
     this.layout = layout;
-    const key = JSON.stringify(layout.pages.map(p => p.bands.map(b => [b.page, b.top, b.bottom, Math.round(b.y * 10), Math.round(b.h * 10)])));
+    const key = JSON.stringify(layout.pages.map(p => [
+      p.bands.map(b => [b.page, b.top, b.bottom, Math.round(b.y * 10), Math.round(b.h * 10), b.x?.from, b.x?.to]),
+      p.labels.map(l => [l.text, Math.round(l.y * 10)]),
+    ]));
     if (key !== this.bandKey) { this.bandKey = key; this.paintPages(layout); }
     this.placeControls(layout);
   }
@@ -119,10 +122,19 @@ export class FormEditor {
         // without smoothing, so neighbouring border lines don't bleed in.
         const sy = stretched ? Math.ceil((H - b.top) * k) : (H - b.top) * k;
         const sh = stretched ? Math.max(1, Math.floor((H - b.bottom) * k) - sy) : natural * k;
+        const [x0, x1] = b.x?.from ?? [0, W];
+        const [ox0, ox1] = b.x?.to ?? [0, W];
         ctx.imageSmoothingEnabled = !stretched;
-        ctx.drawImage(src, 0, sy, W * k, sh, 0, b.y * k, W * k, b.h * k);
+        ctx.drawImage(src, x0 * k, sy, (x1 - x0) * k, sh, ox0 * k, b.y * k, (ox1 - ox0) * k, b.h * k);
       }
       ctx.imageSmoothingEnabled = true;
+      ctx.fillStyle = '#000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      for (const l of out.labels) {
+        ctx.font = `${l.bold ? 'bold ' : ''}${l.size * k}px Helvetica, Arial, sans-serif`;
+        ctx.fillText(l.text, (l.x + l.w / 2) * k, (H - l.y) * k);
+      }
     });
   }
 
@@ -334,8 +346,10 @@ export class FormEditor {
     for (const [g, rows] of byGroup) {
       const all = this.form.rows[g.id] ?? [];
       const lastIndex = all.length - 1;
+      const numbers = this.template.flow?.bands.find(b => 'group' in b && b.group === g.id && b.numbers);
+      const numberX = numbers && 'numbers' in numbers ? numbers.numbers?.left : undefined;
       for (const [row, r] of rows) {
-        const left = (r.numberX ?? r.x) - 13;
+        const left = (numberX ?? r.numberX ?? r.x) - 13;
         const del = this.rowButton('×', `Remove ${g.label.toLowerCase()} ${row + 1}`, 'fe-row-btn--del', W);
         del.disabled = all.length <= 1;
         Object.assign(del.style, pdfRectToPercent({ x: Math.max(1, left), y: r.y + r.h - 11, w: 10, h: 10 }, layout.pageSize));

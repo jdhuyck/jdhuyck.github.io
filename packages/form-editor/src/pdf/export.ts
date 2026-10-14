@@ -34,6 +34,7 @@ export async function exportForm(
   const src = await PDFDocument.load(await res.arrayBuffer());
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
+  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
   const layout = layoutForm(template, form, helveticaMetrics(), { mode: 'print' });
   const { width: W, height: H } = layout.pageSize;
 
@@ -62,16 +63,23 @@ export async function exportForm(
       const name = page.node.newXObject('Band', e.ref);
       const outBottom = H - b.y - b.h;
       const sy = b.h / (b.top - b.bottom);
+      const [x0, x1] = b.x?.from ?? [0, W];
+      const [ox0, ox1] = b.x?.to ?? [0, W];
+      const sx = (ox1 - ox0) / (x1 - x0);
       page.pushOperators(
         pushGraphicsState(),
-        rectangle(0, outBottom, W, b.h),
+        rectangle(ox0, outBottom, ox1 - ox0, b.h),
         clip(),
         endPath(),
-        // Map source [bottom, top] onto output [outBottom, outBottom + h].
-        concatTransformationMatrix(1, 0, 0, sy, 0, outBottom - b.bottom * sy),
+        // Map source [x0, x1] × [bottom, top] onto output [ox0, ox1] × [outBottom, outBottom + h].
+        concatTransformationMatrix(sx, 0, 0, sy, ox0 - x0 * sx, outBottom - b.bottom * sy),
         drawObject(name),
         popGraphicsState(),
       );
+    }
+    for (const l of out.labels) {
+      const f = l.bold ? bold : font;
+      page.drawText(l.text, { x: l.x + (l.w - f.widthOfTextAtSize(l.text, l.size)) / 2, y: l.y, size: l.size, font: f, color: rgb(0, 0, 0) });
     }
     for (const cell of out.cells) {
       if (cell.number && (cell.text || mode === 'fillable')) drawNumber(page, cell, font);
