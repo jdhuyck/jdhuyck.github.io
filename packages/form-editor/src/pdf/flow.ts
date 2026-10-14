@@ -14,8 +14,10 @@ import { groupCellRect } from '../layout';
  *           can be as tall as its fields need (borders and shading survive);
  *  - rows:  a table's printed rows, replaced by one row per row in use.
  * When something grows, everything after it moves down and, if needed, onto
- * a new page (topped with the template's continuation band). The on-screen
- * editor and the PDF export both draw from this result.
+ * a new page (topped with the template's continuation band). Tables are kept
+ * on one page when they fit, and otherwise only break between rows. Each
+ * source page starts a new page unless the template joins it to the one
+ * before. The on-screen editor and the PDF export both draw from this result.
  */
 
 /** Source range [top, bottom] of `page`, drawn into output [y, y + h] (y from the page top). */
@@ -86,12 +88,19 @@ interface Block {
   page: number;
   parts: Part[];
   cells: PendingCell[];
+  /** First block of a source page that isn't joined to the one before. */
+  startsPage?: boolean;
+  /** Table this block is a row of: rows are kept together where possible. */
+  table?: string;
+  /** The table's header, until it's known whether this is the table's first row. */
+  tableHeader?: { page: number; top: number; bottom: number };
   /** Repeated above this block if it starts a continuation page. */
-  header?: { top: number; bottom: number };
+  header?: { page: number; top: number; bottom: number };
 }
 
 const partH = (p: Part) => (p.kind === 'copy' ? p.top - p.bottom : p.h);
 const blockH = (b: Block) => b.parts.reduce((s, p) => s + partH(p), 0);
+const headerH = (b: Block) => (b.header ? b.header.top - b.header.bottom : 0);
 const isRows = (b: GrowBand | RowsBand): b is RowsBand => 'group' in b;
 
 /** Offset from block top for source `y`. Inside a blank part, anchor to its top or bottom edge. */
@@ -154,7 +163,7 @@ export function layoutForm(
   const blocksForPage = (p: number): Block[] => {
     const bands = (flow?.bands ?? []).filter(b => b.page === p).sort((a, b) => b.from - a.from);
     const blocks: Block[] = [];
-    let cursor = H;
+    let cursor = flow?.joins?.[p] ?? H;
     let lead: Part | null = null;
 
     const pushCopy = (top: number, bottom: number) => {
@@ -177,7 +186,10 @@ export function layoutForm(
             { kind: 'blank', top: band.row.from, bottom: band.row.to + 1, slice, h: band.row.from - band.row.to - 1 },
             { kind: 'copy', top: band.row.to + 1, bottom: band.row.to },
           ];
-          blocks.push({ page: p, parts, cells: [], header: band.header ? { top: band.header.from, bottom: band.header.to } : undefined });
+          blocks.push({
+            page: p, parts, cells: [], table: band.group,
+            tableHeader: band.header ? { page: p, top: band.header.from, bottom: band.header.to } : undefined,
+          });
           // Cells: the printed first row's geometry, reused for every row.
           if (!g) return;
           const block = blocks[blocks.length - 1];
@@ -200,7 +212,11 @@ export function layoutForm(
         { kind: 'blank', top: band.from, bottom: band.to + 1, slice, h: band.from - band.to - 1 },
         { kind: 'copy', top: band.to + 1, bottom: band.to },
       ];
-      blocks.push({ page: p, parts, cells: [] });
+      const h = band.table?.header;
+      blocks.push({
+        page: p, parts, cells: [], table: band.table?.id,
+        tableHeader: h ? { page: h.page, top: h.from, bottom: h.to } : undefined,
+      });
       cursor = band.to;
     }
 
@@ -292,7 +308,45 @@ export function layoutForm(
     }
   };
 
-  // ── Lay out every source page ───────────────────────────
+  // ── Build every source page's blocks ────────────────────
+  const blocks: Block[] = [];
+  for (let p = 0; p < template.pageCount; p++) {
+    const pageBlocks = blocksForPage(p);
+
+    // Scalar fields and table-less groups go to the block that holds them.
+    for (const f of template.fields.filter(f => f.page === p)) {
+      const block = blockAt(pageBlocks, f.rect.y) ?? blockAt(pageBlocks, f.rect.y + f.rect.h / 2);
+      if (!block) continue;
+      addCell(block, {
+        id: f.id, field: f, label: f.label, type: f.type,
+        value: form.values[f.id] ?? '', text: textOf(f.type, form.values[f.id] ?? ''), grows: true,
+      }, f.rect, f.type !== 'checkbox');
+    }
+    for (const g of template.groups ?? []) {
+      if (g.page !== p || g.list || (flow?.bands ?? []).some(b => isRows(b) && b.group === g.id)) continue;
+      const rows = rowsOf(g);
+      rows.forEach((r, i) => g.fields.forEach(rf => {
+        const src = groupCellRect(g, rf, i, rows.length);
+        const block = blockAt(pageBlocks, src.y + src.h / 2);
+        if (block) addCell(block, {
+          id: `${g.id}.${r.index}.${rf.id}`, field: rf, group: g, row: r.index,
+          label: `${g.label} ${i + 1}: ${rf.label}`, type: rf.type,
+          value: r.row[rf.id] ?? '', text: textOf(rf.type, r.row[rf.id] ?? ''), grows: false,
+        }, src, false);
+      }));
+    }
+    placeLists(p, pageBlocks);
+
+    if (pageBlocks.length && !(p > 0 && flow?.joins && p in flow.joins)) pageBlocks[0].startsPage = true;
+    blocks.push(...pageBlocks);
+  }
+
+  // A table's header is repeated above every row but its first (which already has it).
+  const continuesTable = (i: number) => !!blocks[i].table && blocks[i - 1]?.table === blocks[i].table && !blocks[i].startsPage;
+  blocks.forEach((b, i) => { if (continuesTable(i)) b.header = b.tableHeader; });
+  for (const block of blocks) settle(block, capacity - headerH(block) - blockH(block));
+
+  // ── Paginate ────────────────────────────────────────────
   const pages: OutPage[] = [];
   let out: OutPage = { bands: [], cells: [] };
   let y = 0;
@@ -308,109 +362,99 @@ export function layoutForm(
     }
     startY = y;
   };
+  // Never stricter than where the template itself prints: unchanged pages fit as-is.
+  const floorOf = (b: Block) => Math.min(marginBottom, b.parts[b.parts.length - 1].bottom);
+  const fitsFrom = (top: number, h: number, b: Block) => top + h <= H - floorOf(b) + 0.01;
 
-  for (let p = 0; p < template.pageCount; p++) {
-    const blocks = blocksForPage(p);
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    if (block.startsPage || !pages.length) newPage(false);
+    const h = blockH(block);
 
-    // Scalar fields and table-less groups go to the block that holds them.
-    for (const f of template.fields.filter(f => f.page === p)) {
-      const block = blockAt(blocks, f.rect.y) ?? blockAt(blocks, f.rect.y + f.rect.h / 2);
-      if (!block) continue;
-      addCell(block, {
-        id: f.id, field: f, label: f.label, type: f.type,
-        value: form.values[f.id] ?? '', text: textOf(f.type, form.values[f.id] ?? ''), grows: true,
-      }, f.rect, f.type !== 'checkbox');
+    let needsBreak = !fitsFrom(y, h, block);
+    if (block.table && !continuesTable(i)) {
+      // First row of a table: if the whole table doesn't fit here but would
+      // fit on a fresh page, move it there. A table too tall for any page
+      // starts here (if its first row fits) and breaks between rows.
+      let j = i + 1;
+      while (j < blocks.length && blocks[j].table === block.table && !blocks[j].startsPage) j++;
+      const rows = blocks.slice(i, j);
+      const total = rows.reduce((s, b) => s + blockH(b), 0);
+      const last = rows[rows.length - 1];
+      needsBreak = !fitsFrom(y, total, last) && (fitsFrom(contH, total, last) || needsBreak);
     }
-    for (const g of template.groups ?? []) {
-      if (g.page !== p || g.list || (flow?.bands ?? []).some(b => isRows(b) && b.group === g.id)) continue;
-      const rows = rowsOf(g);
-      rows.forEach((r, i) => g.fields.forEach(rf => {
-        const src = groupCellRect(g, rf, i, rows.length);
-        const block = blockAt(blocks, src.y + src.h / 2);
-        if (block) addCell(block, {
-          id: `${g.id}.${r.index}.${rf.id}`, field: rf, group: g, row: r.index,
-          label: `${g.label} ${i + 1}: ${rf.label}`, type: rf.type,
-          value: r.row[rf.id] ?? '', text: textOf(rf.type, r.row[rf.id] ?? ''), grows: false,
-        }, src, false);
-      }));
+    if (needsBreak && y > startY + 0.5) {
+      newPage(true);
+      if (block.header) {
+        const hh = headerH(block);
+        out.bands.push({ page: block.header.page, top: block.header.top, bottom: block.header.bottom, y, h: hh });
+        y += hh;
+      }
     }
-    placeLists(p, blocks);
 
-    newPage(false);
-    for (const block of blocks) {
-      settle(block, capacity - blockH(block));
-      const h = blockH(block);
-      // Never stricter than where the template itself prints: unchanged pages fit as-is.
-      const floor = Math.min(marginBottom, block.parts[block.parts.length - 1].bottom);
-      if (y + h > H - floor + 0.01 && y > startY + 0.5) {
-        newPage(true);
-        if (block.header) {
-          const hh = block.header.top - block.header.bottom;
-          out.bands.push({ page: block.page, top: block.header.top, bottom: block.header.bottom, y, h: hh });
-          y += hh;
+    // Draw parts
+    let py = y;
+    for (const part of block.parts) {
+      if (part.kind === 'copy') out.bands.push({ page: block.page, top: part.top, bottom: part.bottom, y: py, h: part.top - part.bottom });
+      else out.bands.push({ page: block.page, top: part.slice[0], bottom: part.slice[1], y: py, h: part.h });
+      py += partH(part);
+    }
+
+    // Place cells
+    const spills: Array<{ base: PendingCell['base']; x: number; w: number; lines: string[] }> = [];
+    for (const c of block.cells) {
+      const rect: Rect = { x: c.x, y: H - (y + c.bottom), w: c.w, h: c.bottom - c.top };
+      let fit: FitResult | null = null;
+      if (c.overflow) {
+        // Keep what fits at the readable size; the rest continues below.
+        const lines = wrap(m, c.base.text, readable, Math.max(1, c.w - PAD_X * 2));
+        const n = Math.max(1, linesThatFit(rect.h, readable));
+        if (lines.length > n) {
+          out.cells.push({ ...c.base, rect, fit: manualFit(rect, readable, lines.slice(0, n)) });
+          spills.push({ base: c.base, x: c.x, w: c.w, lines: lines.slice(n) });
+          continue;
         }
       }
-
-      // Draw parts
-      let py = y;
-      for (const part of block.parts) {
-        if (part.kind === 'copy') out.bands.push({ page: block.page, top: part.top, bottom: part.bottom, y: py, h: part.top - part.bottom });
-        else out.bands.push({ page: block.page, top: part.slice[0], bottom: part.slice[1], y: py, h: part.h });
-        py += partH(part);
-      }
-
-      // Place cells
-      const spills: Array<{ base: PendingCell['base']; x: number; w: number; lines: string[] }> = [];
-      for (const c of block.cells) {
-        const rect: Rect = { x: c.x, y: H - (y + c.bottom), w: c.w, h: c.bottom - c.top };
-        let fit: FitResult | null = null;
-        if (c.overflow) {
-          // Keep what fits at the readable size; the rest continues below.
-          const lines = wrap(m, c.base.text, readable, Math.max(1, c.w - PAD_X * 2));
-          const n = Math.max(1, linesThatFit(rect.h, readable));
-          if (lines.length > n) {
-            out.cells.push({ ...c.base, rect, fit: manualFit(rect, readable, lines.slice(0, n)) });
-            spills.push({ base: c.base, x: c.x, w: c.w, lines: lines.slice(n) });
-            continue;
-          }
+      if (c.base.type !== 'checkbox') {
+        const floor = c.base.grows ? readable : c.minSize;
+        fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: Math.min(floor, c.maxSize), multiline: c.wrapText });
+        if (fit.truncated && floor > c.minSize) {
+          fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
         }
-        if (c.base.type !== 'checkbox') {
-          const floor = c.base.grows ? readable : c.minSize;
-          fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: Math.min(floor, c.maxSize), multiline: c.wrapText });
-          if (fit.truncated && floor > c.minSize) {
-            fit = fitText(m, c.base.text, rect, { maxSize: c.maxSize, minSize: c.minSize, multiline: c.wrapText });
-          }
-          if (fit.truncated) truncated.push(c.base.label);
-        }
-        out.cells.push({ ...c.base, rect, fit });
+        if (fit.truncated) truncated.push(c.base.label);
       }
-      y += h;
+      out.cells.push({ ...c.base, rect, fit });
+    }
+    y += h;
 
-      // Continuation boxes: the block's own border line, its blank slice
-      // stretched to the remaining text, and the border again.
-      const blank = block.parts.find((pt): pt is Extract<Part, { kind: 'blank' }> => pt.kind === 'blank');
-      const border = block.parts[block.parts.length - 1];
+    // Continuation boxes: the block's own border line, its blank slice
+    // stretched to the remaining text, and the border again. Cells that
+    // overflowed side by side (e.g. a table row) continue side by side.
+    const blank = block.parts.find((pt): pt is Extract<Part, { kind: 'blank' }> => pt.kind === 'blank');
+    const border = block.parts[block.parts.length - 1];
+    let k = 1;
+    while (blank && border.kind === 'copy' && spills.some(sp => sp.lines.length)) {
+      const most = Math.max(...spills.map(sp => sp.lines.length));
+      const edge = border.top - border.bottom;
+      const minBox = edge * 2 + blockHeight(m, Math.min(3, most), readable);
+      if (y + minBox > H - marginBottom) newPage(true);
+      const room = H - marginBottom - y - edge * 2;
+      const n = Math.max(1, Math.min(most, linesThatFit(room, readable)));
+      const bh = blockHeight(m, n, readable) + 2;
+      out.bands.push({ page: block.page, top: border.top, bottom: border.bottom, y, h: edge });
+      out.bands.push({ page: block.page, top: blank.slice[0], bottom: blank.slice[1], y: y + edge, h: bh });
+      out.bands.push({ page: block.page, top: border.top, bottom: border.bottom, y: y + edge + bh, h: edge });
       for (const sp of spills) {
-        let k = 1;
-        while (sp.lines.length && blank && border.kind === 'copy') {
-          const edge = border.top - border.bottom;
-          const minBox = edge * 2 + blockHeight(m, Math.min(3, sp.lines.length), readable);
-          if (y + minBox > H - marginBottom) newPage(true);
-          const room = H - marginBottom - y - edge * 2;
-          const n = Math.max(1, Math.min(sp.lines.length, linesThatFit(room, readable)));
-          const bh = blockHeight(m, n, readable) + 2;
-          out.bands.push({ page: block.page, top: border.top, bottom: border.bottom, y, h: edge });
-          out.bands.push({ page: block.page, top: blank.slice[0], bottom: blank.slice[1], y: y + edge, h: bh });
-          out.bands.push({ page: block.page, top: border.top, bottom: border.bottom, y: y + edge + bh, h: edge });
-          const rect: Rect = { x: sp.x, y: H - (y + edge + bh), w: sp.w, h: bh };
-          out.cells.push({
-            ...sp.base, id: `${sp.base.id}~${k++}`, label: `${sp.base.label} (continued)`,
-            rect, fit: manualFit(rect, readable, sp.lines.slice(0, n)), continued: true, grows: false,
-          });
-          sp.lines = sp.lines.slice(n);
-          y += edge * 2 + bh;
-        }
+        if (!sp.lines.length) continue;
+        const rect: Rect = { x: sp.x, y: H - (y + edge + bh), w: sp.w, h: bh };
+        out.cells.push({
+          ...sp.base, id: `${sp.base.id}~${k}`, label: `${sp.base.label} (continued)`,
+          rect, fit: manualFit(rect, readable, sp.lines.slice(0, n)), continued: true, grows: false,
+        });
+        sp.lines = sp.lines.slice(n);
       }
+      k++;
+      y += edge * 2 + bh;
     }
   }
 

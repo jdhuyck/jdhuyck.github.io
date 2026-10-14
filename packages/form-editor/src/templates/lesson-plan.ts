@@ -108,6 +108,11 @@ export const lessonPlan: Template = {
     },
   ],
 
+  sections: [
+    { page: 0, title: 'Planning' },
+    { page: 1, title: 'Reflection' },
+  ],
+
   // On-screen lesson timeline (not exported): plan stages against the lesson time.
   timeline: { group: 'plan', timing: 'timings', label: 'teacher', outcome: 'lo', window: 'time' },
 

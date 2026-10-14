@@ -75,6 +75,11 @@ export const traineeObservation: Template = {
       page: 1, rect: { x: 40, y: 401.5, w: 532, h: 103.5 } },
   ],
 
+  sections: [
+    { page: 0, title: 'Observation' },
+    { page: 1, title: 'Post-lesson feedback' },
+  ],
+
   // Notes, feedback and the specific focus grow to fit; later content moves down.
   flow: {
     continuation: { page: 0, from: 842, to: 770 },

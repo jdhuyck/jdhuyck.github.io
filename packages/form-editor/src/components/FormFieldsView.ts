@@ -1,4 +1,4 @@
-import type { Template, FilledForm, ScalarField, RepeatableGroup } from '../types';
+import type { Template, FilledForm, ScalarField, RepeatableGroup, Matrix } from '../types';
 import { FormStore } from '../storage';
 import { canAddRow, nowValue } from '../layout';
 import { createTimeslotEditor } from '../timeslot';
@@ -93,33 +93,88 @@ export class FormFieldsView {
     return p;
   }
 
+  /**
+   * One section per template section (e.g. planning / reflection), or a
+   * single continuous form. Printed page breaks don't split the form.
+   */
   private render(): void {
     this.root.innerHTML = '';
+    const sections = this.template.sections?.length ? this.template.sections : [{ page: 0, title: '' }];
+    const matrixOf = new Map<string, Matrix>();
+    for (const mx of this.template.matrices ?? []) {
+      for (const r of mx.rows) for (const c of mx.columns) matrixOf.set(`${mx.id}.${r.id}.${c.id}`, mx);
+    }
+    const drawn = new Set<Matrix>();
 
-    for (let p = 0; p < this.template.pageCount; p++) {
-      const scalars = this.template.fields.filter(f => f.page === p);
-      const groups  = (this.template.groups ?? []).filter(g => g.page === p);
-      if (scalars.length === 0 && groups.length === 0) continue;
-
+    sections.forEach((sec, i) => {
+      const end = sections[i + 1]?.page ?? this.template.pageCount;
+      const inSection = (page: number) => page >= sec.page && page < end;
       const section = document.createElement('section');
       section.className = 'fvf-section';
 
-      const heading = document.createElement('h2');
-      heading.className = 'fvf-section__title';
-      heading.textContent = `page ${p + 1}`;
-      section.appendChild(heading);
-
-      if (scalars.length) {
-        const grid = document.createElement('div');
-        grid.className = 'fvf-fields';
-        for (const f of scalars) grid.appendChild(this.renderScalar(f));
-        section.appendChild(grid);
+      if (sec.title) {
+        const heading = document.createElement('h2');
+        heading.className = 'fvf-section__title';
+        heading.textContent = sec.title;
+        section.appendChild(heading);
       }
 
-      for (const g of groups) section.appendChild(this.renderGroup(g));
+      // Fields in order; a matrix is drawn whole where its first cell is.
+      let grid: HTMLElement | null = null;
+      for (const f of this.template.fields.filter(f => inSection(f.page))) {
+        const mx = matrixOf.get(f.id);
+        if (mx) {
+          if (!drawn.has(mx)) { drawn.add(mx); section.appendChild(this.renderMatrix(mx)); grid = null; }
+          continue;
+        }
+        if (!grid) {
+          grid = document.createElement('div');
+          grid.className = 'fvf-fields';
+          section.appendChild(grid);
+        }
+        grid.appendChild(this.renderScalar(f));
+      }
 
-      this.root.appendChild(section);
+      for (const g of (this.template.groups ?? []).filter(g => inSection(g.page))) section.appendChild(this.renderGroup(g));
+
+      if (section.childElementCount > (sec.title ? 1 : 0)) this.root.appendChild(section);
+    });
+  }
+
+  /** A labelled-rows × labelled-columns table: each row lists its columns side by side. */
+  private renderMatrix(mx: Matrix): HTMLElement {
+    const wrap = document.createElement('div');
+    wrap.className = 'fvf-group fvf-matrix';
+    wrap.style.setProperty('--fvf-cols', String(mx.columns.length));
+
+    const heading = document.createElement('h3');
+    heading.className = 'fvf-group__title';
+    heading.textContent = mx.label;
+    wrap.appendChild(heading);
+
+    const fields = new Map(this.template.fields.map(f => [f.id, f]));
+    for (const r of mx.rows) {
+      const row = document.createElement('div');
+      row.className = 'fvf-matrix__row';
+      const title = document.createElement('h4');
+      title.className = 'fvf-matrix__label';
+      title.textContent = r.label;
+      row.appendChild(title);
+      if (r.help) row.appendChild(this.help(r.help));
+
+      const cells = document.createElement('div');
+      cells.className = 'fvf-matrix__cells';
+      for (const c of mx.columns) {
+        const f = fields.get(`${mx.id}.${r.id}.${c.id}`);
+        if (!f) continue;
+        const cell = this.renderScalar({ ...f, label: c.label, help: undefined });
+        cell.classList.remove('fvf-field--wide');
+        cells.appendChild(cell);
+      }
+      row.appendChild(cells);
+      wrap.appendChild(row);
     }
+    return wrap;
   }
 
   private renderScalar(f: ScalarField): HTMLElement {

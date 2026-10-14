@@ -83,12 +83,19 @@ export interface GrowBand {
   from: number;
   to: number;
   slice?: [number, number];
+  /**
+   * Bands with the same `table.id` are rows of one table: it is kept on one
+   * page when it fits and otherwise only breaks between rows, with `header`
+   * repeated at the top of the next page.
+   */
+  table?: { id: string; header?: { page: number; from: number; to: number } };
 }
 
 /**
  * The printed rows of a table, replaced by one copy of `row` per row in use.
  * `row` is a single printed row (with its own blank `slice`); `header` is
- * repeated at the top of continuation pages.
+ * repeated at the top of continuation pages. Like a `table` of grow bands,
+ * the whole table is kept on one page when it fits.
  */
 export interface RowsBand {
   page: number;
@@ -109,10 +116,30 @@ export interface Flow {
   continuation?: { page: number; from: number; to: number };
   /** Lowest content on each source page, to avoid copying trailing whitespace. */
   bottoms?: Record<number, number>;
+  /**
+   * Source pages that carry straight on from the previous one (e.g. a table
+   * Word split across pages), mapped to where their content starts. The strip
+   * above it (a repeated logo) is skipped and there's no page break: content
+   * flows on and only breaks where it runs out of room. Pages not listed
+   * always start a new page (e.g. a lesson plan's reflection page).
+   */
+  joins?: Record<number, number>;
   /** Text shrinks to this size before a field grows instead. Default 8pt. */
   readable?: number;
   /** Bottom margin on output pages. Default 28pt. */
   marginBottom?: number;
+}
+
+/**
+ * A table with labelled rows and columns (e.g. one column per case pupil).
+ * Each cell is an ordinary field in `fields` with the id `${id}.${row}.${column}`;
+ * the matrix only tells form view to lay them out as a grid.
+ */
+export interface Matrix {
+  id: string;
+  label: string;
+  columns: Array<{ id: string; label: string }>;
+  rows: Array<{ id: string; label: string; help?: string }>;
 }
 
 /** Cross-field checks run before export. */
@@ -133,6 +160,13 @@ export interface Template {
   pageSize: { width: number; height: number };   // PDF points, per page
   fields: ScalarField[];
   groups?: RepeatableGroup[];
+  matrices?: Matrix[];
+  /**
+   * Titled parts, each starting on a source page (e.g. a lesson plan's
+   * planning and reflection pages), shown as headings in form view. Without
+   * sections, form view is one continuous form.
+   */
+  sections?: Array<{ page: number; title: string }>;
   rules?: Rule[];
   /** Reflow rules: which bands grow and which tables repeat rows. */
   flow?: Flow;
