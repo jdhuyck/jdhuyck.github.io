@@ -34,12 +34,12 @@ export function formatChoices(value: string | undefined): string {
 }
 
 /**
- * CSS background for a set of choices: one colour, equal stacked bands for
- * several (top to bottom, in order), or grey for none.
+ * CSS background image for a set of choices: one colour, equal stacked bands
+ * for several (top to bottom, in order), or grey for none. Always an image
+ * (never a bare colour), so it can be layered over other backgrounds.
  */
 export function choicesFill(nums: number[], direction = 'to bottom'): string {
-  if (!nums.length) return NO_CHOICE_COLOUR;
-  if (nums.length === 1) return colourOf(nums[0]);
+  if (nums.length <= 1) { const c = nums.length ? colourOf(nums[0]) : NO_CHOICE_COLOUR; return `linear-gradient(${c}, ${c})`; }
   const step = 100 / nums.length;
   return `linear-gradient(${direction}, ${nums.map((n, i) => `${colourOf(n)} ${i * step}% ${(i + 1) * step}%`).join(', ')})`;
 }
