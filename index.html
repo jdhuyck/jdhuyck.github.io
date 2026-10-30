@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mr Huyck’s guide to Computing has moved</title>
+    <meta name="robots" content="noindex" />
+    <script>
+      // Same page on the new address: /lab/networks?x#y → https://mrhuyck.co.uk/lab/networks?x#y
+      location.replace('https://mrhuyck.co.uk' + location.pathname + location.search + location.hash);
+    </script>
+    <noscript><meta http-equiv="refresh" content="0; url=https://mrhuyck.co.uk/" /></noscript>
+    <style>
+      :root { color-scheme: light dark; --bg: #f2eee4; --ink: #1d1d1b; --link: #0072b2; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #161614; --ink: #e8e4da; --link: #56b4e9; } }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1rem;
+             background: var(--bg); color: var(--ink); font: 1rem/1.5 ui-monospace, Menlo, monospace; }
+      a { color: var(--link); }
+    </style>
+  </head>
+  <body>
+    <p>Mr Huyck’s guide to Computing has moved to <a href="https://mrhuyck.co.uk/">mrhuyck.co.uk</a>.</p>
+  </body>
+</html>
